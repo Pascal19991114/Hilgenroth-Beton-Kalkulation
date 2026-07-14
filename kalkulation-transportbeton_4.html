@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulation Transportbeton – Hilgenroth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --rot:#C8102E;
+    --rot-dunkel:#9C0C22;
+    --schwarz:#171717;
+    --grau-900:#232323;
+    --grau-700:#4a4a4a;
+    --grau-500:#7a7a7a;
+    --grau-300:#d6d3ce;
+    --grau-100:#eeece8;
+    --weiss:#ffffff;
+    --gruen:#1b7a3d;
+    --gruen-bg:#e7f3ea;
+    --gelb:#8a6d00;
+    --gelb-bg:#fdf3d6;
+    --rot-bg:#fbe6e6;
+    --radius:3px;
+    --font-ui:'IBM Plex Sans',system-ui,sans-serif;
+    --font-num:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-ui);
+    background:var(--grau-100);
+    color:var(--grau-900);
+    font-size:14px;
+    line-height:1.4;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    min-height:100vh;
+  }
+  /* ---------- HEADER ---------- */
+  header.top{
+    grid-column:1 / -1;
+    background:var(--schwarz);
+    color:var(--weiss);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    height:56px;
+    border-bottom:4px solid var(--rot);
+  }
+  header.top .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  header.top .brand .mark{
+    width:10px;height:28px;background:var(--rot);
+  }
+  header.top .brand h1{
+    font-size:16px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  header.top .brand small{
+    display:block;
+    color:var(--grau-300);
+    font-size:11px;
+    font-weight:400;
+  }
+  header.top .actions{display:flex;gap:8px;align-items:center;}
+  header.top .conn{
+    font-size:11px;
+    color:var(--grau-300);
+    display:flex;align-items:center;gap:6px;
+    font-family:var(--font-num);
+  }
+  header.top .conn .dot{width:7px;height:7px;border-radius:50%;background:var(--grau-500);}
+  header.top .conn.online .dot{background:#4caf50;}
+  header.top .conn.offline .dot{background:var(--rot);}
+
+  /* ---------- BUTTONS ---------- */
+  button{
+    font-family:var(--font-ui);
+    cursor:pointer;
+    border:none;
+    border-radius:var(--radius);
+    font-size:13px;
+    font-weight:600;
+    padding:8px 14px;
+    transition:background .12s ease, transform .05s ease;
+  }
+  button:active{transform:translateY(1px);}
+  .btn-primary{background:var(--rot);color:#fff;}
+  .btn-primary:hover{background:var(--rot-dunkel);}
+  .btn-dark{background:var(--schwarz);color:#fff;}
+  .btn-dark:hover{background:#000;}
+  .btn-ghost{background:transparent;color:var(--grau-900);border:1px solid var(--grau-300);}
+  .btn-ghost:hover{background:var(--grau-100);}
+  .btn-ghost.on-dark{color:#fff;border-color:#555;}
+  .btn-ghost.on-dark:hover{background:#2a2a2a;}
+  .btn-danger{background:var(--rot-bg);color:var(--rot-dunkel);border:1px solid #e3a6a6;}
+  .btn-danger:hover{background:#f6d3d3;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  button.icon{padding:8px 10px;}
+
+  /* ---------- SIDEBAR ---------- */
+  aside.sidebar{
+    background:var(--weiss);
+    border-right:1px solid var(--grau-300);
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - 56px);
+    overflow:hidden;
+  }
+  .sidebar .sidebar-head{
+    padding:14px 14px 10px 14px;
+    border-bottom:1px solid var(--grau-100);
+  }
+  .sidebar input[type=search]{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid var(--grau-300);
+    border-radius:var(--radius);
+    font-family:var(--font-ui);
+    font-size:13px;
+  }
+  .sidebar .new-btn{width:100%;margin-top:8px;}
+  .project-list{
+    overflow-y:auto;
+    flex:1;
+    padding:6px;
+  }
+  .project-card{
+    padding:10px 10px;
+    border-radius:var(--radius);
+    border:1px solid transparent;
+    cursor:pointer;
+    margin-bottom:4px;
+  }
+  .project-card:hover{background:var(--grau-100);}
+  .project-card.active{
+    background:#fff3f3;
+    border-color:var(--rot);
+  }
+  .project-card .row1{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12px;font-family:var(--font-num);color:var(--grau-500);
+  }
+  .project-card .kunde{
+    font-weight:600;font-size:14px;margin-top:2px;
+  }
+  .project-card .bauvorhaben{
+    font-size:12px;color:var(--grau-700);
+  }
+  .badge{
+    display:inline-block;
+    font-size:10px;
+    font-weight:700;
+    padding:2px 6px;
+    border-radius:10px;
+    font-family:var(--font-num);
+    margin-top:6px;
+  }
+  .badge.ok{background:var(--gruen-bg);color:var(--gruen);}
+  .badge.warn{background:var(--gelb-bg);color:var(--gelb);}
+  .badge.bad{background:var(--rot-bg);color:var(--rot-dunkel);}
+  .sidebar-empty{
+    padding:30px 16px;color:var(--grau-500);font-size:13px;text-align:center;
+  }
+  .sidebar-foot{
+    padding:10px 14px;
+    border-top:1px solid var(--grau-100);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .sidebar-foot button{font-size:11px;padding:6px 8px;}
+
+  /* ---------- MAIN ---------- */
+  main{
+    padding:24px 32px 60px 32px;
+    max-width:980px;
+  }
+  .doc-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    margin-bottom:18px;
+  }
+  .doc-head h2{
+    margin:0 0 2px 0;font-size:20px;
+  }
+  .doc-head .nr{
+    font-family:var(--font-num);color:var(--grau-500);font-size:13px;
+  }
+  .doc-actions{display:flex;gap:8px;}
+
+  section.card{
+    background:var(--weiss);
+    border:1px solid var(--grau-300);
+    border-radius:6px;
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  section.card .card-head{
+    background:var(--grau-100);
+    padding:10px 16px;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:var(--grau-700);
+    border-bottom:1px solid var(--grau-300);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  section.card .card-head .stripe{
+    display:inline-block;width:4px;height:14px;background:var(--rot);margin-right:8px;vertical-align:middle;
+  }
+  .card-body{padding:16px;}
+  .grid{
+    display:grid;
+    gap:14px;
+  }
+  .grid.c2{grid-template-columns:1fr 1fr;}
+  .grid.c3{grid-template-columns:1fr 1fr 1fr;}
+  .grid.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{
+    font-size:11.5px;font-weight:600;color:var(--grau-700);
+    text-transform:uppercase;letter-spacing:.3px;
+  }
+  .field input[type=text],
+  .field input[type=number],
+  .field input[type=date],
+  .field select{
+    padding:8px 9px;
+    border:1px solid var(--grau-300);
+    border-radius:var(--radius);
+    font-family:var(--font-num);
+    font-size:14px;
+    background:#fff;
+    color:var(--grau-900);
+  }
+  .field input:focus,.field select:focus{
+    outline:none;border-color:var(--rot);box-shadow:0 0 0 2px rgba(200,16,46,.12);
+  }
+  .field.readonly input{
+    background:var(--grau-100);color:var(--grau-700);font-weight:600;
+  }
+  .field .hint{font-size:11px;color:var(--grau-500);font-family:var(--font-ui);}
+  .field .unit{font-size:11px;color:var(--grau-500);font-family:var(--font-num);}
+  .checkbox-row{display:flex;align-items:center;gap:8px;padding-top:6px;}
+  .checkbox-row input{width:16px;height:16px;accent-color:var(--rot);}
+  .checkbox-row label{font-size:13px;font-weight:600;color:var(--grau-900);text-transform:none;}
+  a.route-link{
+    font-size:12px;color:var(--rot-dunkel);text-decoration:none;font-weight:600;
+  }
+  a.route-link:hover{text-decoration:underline;}
+
+  /* results */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .kpi{
+    border:1px solid var(--grau-300);border-radius:var(--radius);padding:12px;
+    background:var(--grau-100);
+  }
+  .kpi .label{font-size:11px;text-transform:uppercase;color:var(--grau-700);font-weight:700;letter-spacing:.3px;}
+  .kpi .value{font-family:var(--font-num);font-size:20px;font-weight:700;margin-top:4px;}
+  .kpi.neg .value{color:var(--rot-dunkel);}
+  .kpi.pos .value{color:var(--gruen);}
+
+  .warn-box{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:10px 12px;border-radius:var(--radius);margin-top:10px;font-size:13px;
+  }
+  .warn-box.bad{background:var(--rot-bg);color:var(--rot-dunkel);border:1px solid #e3a6a6;}
+  .warn-box.warn{background:var(--gelb-bg);color:var(--gelb);border:1px solid #e4d18f;}
+  .warn-box.ok{background:var(--gruen-bg);color:var(--gruen);border:1px solid #a9d9b6;}
+  .warn-box b{font-family:var(--font-num);}
+
+  table.breakdown{width:100%;border-collapse:collapse;font-family:var(--font-num);font-size:13px;}
+  table.breakdown th{
+    text-align:left;font-family:var(--font-ui);text-transform:uppercase;font-size:10.5px;
+    color:var(--grau-700);border-bottom:1px solid var(--grau-300);padding:6px 8px;
+  }
+  table.breakdown td{padding:6px 8px;border-bottom:1px solid var(--grau-100);}
+  table.breakdown td.num,table.breakdown th.num{text-align:right;}
+  table.breakdown tr.total td{font-weight:700;border-top:2px solid var(--grau-900);border-bottom:none;}
+
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:6px;}
+  .sig-line{border-top:1px solid var(--grau-900);margin-top:36px;padding-top:4px;font-size:11px;color:var(--grau-700);}
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(20,20,20,.55);
+    display:flex;align-items:center;justify-content:center;z-index:100;
+  }
+  .modal{
+    background:#fff;border-radius:8px;max-width:640px;width:92%;
+    max-height:86vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  .modal-head{
+    padding:16px 20px;border-bottom:1px solid var(--grau-300);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .modal-head h3{margin:0;font-size:16px;}
+  .modal-body{padding:18px 20px;}
+  .modal-foot{padding:14px 20px;border-top:1px solid var(--grau-300);display:flex;justify-content:flex-end;gap:8px;}
+  .modal input[type=password],.modal input[type=text],.modal input[type=number]{
+    width:100%;padding:9px 10px;border:1px solid var(--grau-300);border-radius:var(--radius);
+    font-family:var(--font-num);font-size:14px;
+  }
+  .modal.wide{max-width:860px;}
+  .tab-bar{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--grau-300);}
+  .tab-btn{
+    background:transparent;border:none;border-bottom:2px solid transparent;
+    padding:9px 4px;margin-right:14px;font-size:13px;font-weight:600;color:var(--grau-500);
+    border-radius:0;
+  }
+  .tab-btn:hover{color:var(--grau-900);background:transparent;}
+  .tab-btn.active{color:var(--rot-dunkel);border-bottom-color:var(--rot);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .import-row{display:flex;align-items:center;gap:10px;background:var(--grau-100);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:var(--grau-700);}
+  .import-row input[type=file]{font-size:12px;}
+
+  .price-table{width:100%;border-collapse:collapse;font-size:12.5px;font-family:var(--font-num);}
+  .price-table th{position:sticky;top:0;background:#fff;text-align:left;padding:6px 6px;border-bottom:1px solid var(--grau-300);font-family:var(--font-ui);text-transform:uppercase;font-size:10px;color:var(--grau-700);}
+  .price-table td{padding:5px 6px;border-bottom:1px solid var(--grau-100);}
+  .price-table td.num{text-align:right;}
+  .price-table input{width:100%;border:1px solid transparent;background:transparent;font-family:var(--font-num);padding:3px 4px;border-radius:2px;}
+  .price-table input:focus{border-color:var(--rot);background:#fff;outline:none;}
+  .price-scroll{max-height:340px;overflow-y:auto;border:1px solid var(--grau-300);border-radius:var(--radius);}
+
+  .toast{
+    position:fixed;bottom:20px;right:24px;background:var(--schwarz);color:#fff;
+    padding:12px 18px;border-radius:6px;font-size:13px;font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:200;
+    display:flex;align-items:center;gap:10px;
+  }
+  .toast.err{background:var(--rot-dunkel);}
+  .toast .stripe{width:4px;height:16px;background:var(--rot);}
+  .toast.err .stripe{background:#fff;}
+
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:var(--grau-300);border-radius:6px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--grau-500);}
+
+  /* ---------- PRINT ---------- */
+  @media print{
+    aside.sidebar, header.top, .doc-actions, .no-print{display:none !important;}
+    body{background:#fff;}
+    .app{display:block;}
+    main{padding:0;max-width:none;}
+    section.card{border:1px solid #999;box-shadow:none;break-inside:avoid;}
+    section.card .card-head{background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .kpi{background:#f2f2f2 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    @page{size:A4;margin:14mm 12mm;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="appRoot" style="display:none;">
+  <header class="top">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1>Kalkulation Transportbeton</h1>
+        <small>Rudolf Hilgenroth GmbH &amp; Co. KG</small>
+      </div>
+    </div>
+    <div class="actions">
+      <span id="connState" class="conn offline"><span class="dot"></span>verbinde…</span>
+      <button class="btn-ghost on-dark icon" id="btnAdmin" title="Einstellungen (Preise, Parameter)">⚙ Einstellungen</button>
+      <button class="btn-ghost on-dark icon" id="btnLogout" title="Abmelden">⎋ Abmelden</button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <input type="search" id="searchBox" placeholder="Suche: Kunde, Bauvorhaben, Angebots-Nr…">
+      <button class="btn-primary new-btn" id="btnNew">+ Neue Kalkulation</button>
+    </div>
+    <div class="project-list" id="projectList">
+      <div class="sidebar-empty">Lade gespeicherte Kalkulationen…</div>
+    </div>
+    <div class="sidebar-foot">
+      <span id="countInfo" style="font-size:11px;color:var(--grau-500);font-family:var(--font-num);">0 Kalkulationen</span>
+      <button class="btn-ghost" id="btnExport" style="font-size:11px;">Export CSV</button>
+    </div>
+  </aside>
+
+  <main id="mainArea">
+    <!-- filled by JS -->
+  </main>
+</div>
+
+<div id="loginScreen" style="position:fixed;inset:0;background:var(--grau-100);display:flex;align-items:center;justify-content:center;z-index:50;">
+  <div style="background:#fff;border:1px solid var(--grau-300);border-radius:8px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;">
+    <div style="background:var(--schwarz);border-bottom:4px solid var(--rot);padding:18px 22px;display:flex;align-items:center;gap:12px;">
+      <div style="width:10px;height:26px;background:var(--rot);"></div>
+      <div>
+        <div style="color:#fff;font-weight:600;font-size:15px;">Kalkulation Transportbeton</div>
+        <div style="color:var(--grau-300);font-size:11px;">Rudolf Hilgenroth GmbH &amp; Co. KG</div>
+      </div>
+    </div>
+    <div style="padding:22px;">
+      <div class="field" style="margin-bottom:12px;">
+        <label>E-Mail</label>
+        <input type="text" id="loginEmail" autocomplete="username">
+      </div>
+      <div class="field" style="margin-bottom:16px;">
+        <label>Passwort</label>
+        <input type="password" id="loginPassword" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="btnLogin" style="width:100%;">Anmelden</button>
+      <div id="loginError" style="color:var(--rot-dunkel);font-size:12.5px;margin-top:10px;display:none;"></div>
+      <div style="color:var(--grau-500);font-size:11.5px;margin-top:14px;">Zugang nur für autorisierte Nutzer. Konten werden manuell in der Firebase Console angelegt.</div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script type="module">
+/* =========================================================================
+   HILGENROTH – KALKULATION TRANSPORTBETON
+   Single-file HTML tool. Firebase Realtime Database als Datenschicht.
+   Struktur:
+     /kalkulationen/{id}
+     /settings/parameter
+     /settings/sorten/{sorteCode}
+     /meta/counter
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   1) FIREBASE CONFIG  – bitte eintragen (Projekt via Firebase Console)
+   --------------------------------------------------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDX-K_Bj03INdS7Dtm_701wI9zGF5mwfl8",
+  authDomain: "beton-kalkulation.firebaseapp.com",
+  // TODO: bitte prüfen/anpassen – genaue Realtime-Database-URL steht in der
+  // Firebase Console unter "Realtime Database" oben auf der Seite.
+  // Format hängt von der Region ab, in der die DB angelegt wurde, z.B.:
+  //   europe-west1:  https://beton-kalkulation-default-rtdb.europe-west1.firebasedatabase.app
+  //   us-central1:   https://beton-kalkulation-default-rtdb.firebaseio.com
+  databaseURL: "https://beton-kalkulation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "beton-kalkulation",
+  storageBucket: "beton-kalkulation.firebasestorage.app",
+  messagingSenderId: "403651646517",
+  appId: "1:403651646517:web:e612f412fbe91193f7cd7c"
+};
+
+// Admin-Passwort für Preislisten- / Parameter-Bearbeitung (rein clientseitig,
+// analog zu den anderen Hilgenroth-Tools – kein Ersatz für echte Rechteverwaltung)
+const ADMIN_PASSWORD = "hilgenroth2026";
+
+// E-Mail-Adresse mit reduzierter "Chef-Ansicht" (nur Freigabe + Nachlass-Korrektur,
+// keine Preislisten-/Parameter-Bearbeitung, keine neuen Kalkulationen).
+const CHEF_EMAILS = ["r59.hilgenroth@web.de"];
+let currentUserEmail = '';
+function isChef(){ return CHEF_EMAILS.includes((currentUserEmail||'').toLowerCase()); }
+
+/* ---------------------------------------------------------------------
+   2) FIREBASE SDK (modular, per CDN)
+   --------------------------------------------------------------------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getDatabase, ref, get, set, push, update, remove, onValue, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getDatabase(fbApp);
+
+const connEl = document.getElementById('connState');
+function setConn(state, label){
+  if (!connEl) return;
+  connEl.className = 'conn ' + state;
+  connEl.innerHTML = '<span class="dot"></span>' + label;
+}
+
+const loginScreen = document.getElementById('loginScreen');
+const appRoot = document.getElementById('appRoot');
+const loginError = document.getElementById('loginError');
+
+function showLogin(){
+  loginScreen.style.display = 'flex';
+  appRoot.style.display = 'none';
+}
+function showApp(){
+  loginScreen.style.display = 'none';
+  appRoot.style.display = 'grid';
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUserEmail = user.email || '';
+    showApp();
+    setConn('online', 'verbunden · ' + currentUserEmail);
+    applyRoleUI();
+    boot();
+  } else {
+    currentUserEmail = '';
+    showLogin();
+  }
+});
+
+document.getElementById('btnLogin').addEventListener('click', doLogin);
+document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  loginError.style.display = 'none';
+  if (!email || !password){
+    loginError.textContent = 'Bitte E-Mail und Passwort eingeben.';
+    loginError.style.display = 'block';
+    return;
+  }
+  signInWithEmailAndPassword(auth, email, password).catch(err => {
+    let msg = 'Anmeldung fehlgeschlagen.';
+    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found'){
+      msg = 'E-Mail oder Passwort falsch.';
+    } else if (err.code === 'auth/too-many-requests'){
+      msg = 'Zu viele Fehlversuche. Bitte kurz warten.';
+    }
+    loginError.textContent = msg;
+    loginError.style.display = 'block';
+  });
+}
+document.getElementById('btnLogout').addEventListener('click', () => {
+  if (unsavedDirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+  signOut(auth);
+});
+
+function applyRoleUI(){
+  const chef = isChef();
+  document.getElementById('btnNew').style.display = chef ? 'none' : '';
+  document.getElementById('btnAdmin').style.display = chef ? 'none' : '';
+  document.getElementById('btnExport').style.display = chef ? 'none' : '';
+}
+
+/* ---------------------------------------------------------------------
+   3) STAMMDATEN – Sorten (Preise 2026 + EK), Stand Übernahme aus Excel.
+      Werden beim allerersten Start nach Firebase gespiegelt (Seed) und
+      danach ausschließlich aus Firebase gelesen/bearbeitet (Einstellungen).
+   --------------------------------------------------------------------- */
+const SEED_SORTEN = [{"sorte":100500,"bezeichnung":null,"ek":null,"preis":190.6,"preis_neu":194.5},{"sorte":100504,"bezeichnung":null,"ek":null,"preis":195,"preis_neu":198.9},{"sorte":100600,"bezeichnung":null,"ek":null,"preis":127.5,"preis_neu":130.1},{"sorte":100702,"bezeichnung":null,"ek":null,"preis":145.9,"preis_neu":148.9},{"sorte":100708,"bezeichnung":null,"ek":null,"preis":160,"preis_neu":163.2},{"sorte":100900,"bezeichnung":null,"ek":null,"preis":155.5,"preis_neu":158.7},{"sorte":110164,"bezeichnung":"C 8/10 F1 Dmax 16","ek":72.0861,"preis":153.5,"preis_neu":156.6},{"sorte":110164,"bezeichnung":"C 8/10 F1 Dmax 16","ek":72.0861,"preis":153.5,"preis_neu":156.6},{"sorte":110364,"bezeichnung":"C 8/10 F3 Dmax 16","ek":74.1647,"preis":156.3,"preis_neu":159.5},{"sorte":110364,"bezeichnung":"C 8/10 F3 Dmax 16","ek":74.1647,"preis":156.3,"preis_neu":159.5},{"sorte":120054,"bezeichnung":null,"ek":null,"preis":153.9,"preis_neu":157},{"sorte":120154,"bezeichnung":"C 12/15 C1 Dmax 8","ek":76.4459,"preis":162.4,"preis_neu":165.7},{"sorte":120154,"bezeichnung":"C 12/15 C1 Dmax 8","ek":76.4459,"preis":162.4,"preis_neu":165.7},{"sorte":120164,"bezeichnung":"C 12/15 C1 Dmax 16","ek":72.1949,"preis":157.4,"preis_neu":160.6},{"sorte":120164,"bezeichnung":"C 12/15 C1 Dmax 16","ek":72.1949,"preis":157.4,"preis_neu":160.6},{"sorte":120354,"bezeichnung":"C 12/15 F3 Dmax 8","ek":81.1058,"preis":166.9,"preis_neu":170.29999999999998},{"sorte":120354,"bezeichnung":"C 12/15 F3 Dmax 8","ek":81.1058,"preis":166.9,"preis_neu":170.29999999999998},{"sorte":120364,"bezeichnung":"C 12/15 F3 Dmax 16","ek":79.3171,"preis":161.9,"preis_neu":165.2},{"sorte":120364,"bezeichnung":"C 12/15 F3 Dmax 16","ek":79.3171,"preis":161.9,"preis_neu":165.2},{"sorte":120384,"bezeichnung":"C 12/15 F3 Dmax 32","ek":77.9686,"preis":158.5,"preis_neu":161.7},{"sorte":120384,"bezeichnung":"C 12/15 F3 Dmax 32","ek":77.9686,"preis":158.5,"preis_neu":161.7},{"sorte":131354,"bezeichnung":"C 16/20 F3 Dmax 8","ek":82.4105,"preis":169.5,"preis_neu":172.9},{"sorte":131354,"bezeichnung":"C 16/20 F3 Dmax 8","ek":82.4105,"preis":169.5,"preis_neu":172.9},{"sorte":131364,"bezeichnung":"C 16/20 F3 Dmax 16","ek":80.5682,"preis":164.5,"preis_neu":167.79999999999998},{"sorte":131364,"bezeichnung":"C 16/20 F3 Dmax 16","ek":80.5682,"preis":164.5,"preis_neu":167.79999999999998},{"sorte":131384,"bezeichnung":"C 16/20 F3 Dmax 32","ek":79.2835,"preis":161.5,"preis_neu":164.79999999999998},{"sorte":131384,"bezeichnung":"C 16/20 F3 Dmax 32","ek":79.2835,"preis":161.5,"preis_neu":164.79999999999998},{"sorte":140154,"bezeichnung":"C 20/15 C1 Dmax 8","ek":83.8284,"preis":164.6,"preis_neu":167.9},{"sorte":140154,"bezeichnung":"C 20/15 C1 Dmax 8","ek":83.8284,"preis":164.6,"preis_neu":167.9},{"sorte":140164,"bezeichnung":"C 20/25 C1 Dmax 16","ek":80.7217,"preis":159.6,"preis_neu":162.79999999999998},{"sorte":140164,"bezeichnung":"C 20/25 C1 Dmax 16","ek":80.7217,"preis":159.6,"preis_neu":162.79999999999998},{"sorte":140184,"bezeichnung":"C 20/25 C1 Dmax 32","ek":79.4257,"preis":156.6,"preis_neu":159.79999999999998},{"sorte":140184,"bezeichnung":"C 20/25 C1 Dmax 32","ek":79.4257,"preis":156.6,"preis_neu":159.79999999999998},{"sorte":142354,"bezeichnung":"C 20/25 F3 Dmax 8","ek":87.1102,"preis":171.2,"preis_neu":174.7},{"sorte":142354,"bezeichnung":"C 20/25 F3 Dmax 8","ek":87.1102,"preis":171.2,"preis_neu":174.7},{"sorte":142364,"bezeichnung":"C 20/25 F3 Dmax 16","ek":84.0975,"preis":166.2,"preis_neu":169.6},{"sorte":142364,"bezeichnung":"C 20/25 F3 Dmax 16","ek":84.0975,"preis":166.2,"preis_neu":169.6},{"sorte":142366,"bezeichnung":null,"ek":null,"preis":166.2,"preis_neu":169.6},{"sorte":142384,"bezeichnung":"C 20/25 F3 Dmax 32","ek":82.531,"preis":163.2,"preis_neu":166.5},{"sorte":142384,"bezeichnung":"C 20/25 F3 Dmax 32","ek":82.531,"preis":163.2,"preis_neu":166.5},{"sorte":142386,"bezeichnung":null,"ek":null,"preis":163.2,"preis_neu":166.5},{"sorte":153354,"bezeichnung":"C 25/30 F3 Dmax 8","ek":93.4603,"preis":175.1,"preis_neu":178.7},{"sorte":153354,"bezeichnung":"C 25/30 F3 Dmax 8","ek":93.4603,"preis":175.1,"preis_neu":178.7},{"sorte":153364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":90.1635,"preis":170.1,"preis_neu":173.6},{"sorte":153364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":90.1635,"preis":170.1,"preis_neu":173.6},{"sorte":153384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":87.3693,"preis":167.1,"preis_neu":170.5},{"sorte":153384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":87.3693,"preis":167.1,"preis_neu":170.5},{"sorte":153464,"bezeichnung":"C 25/30 F4 Dmax 16","ek":98.3735,"preis":175.8,"preis_neu":179.4},{"sorte":153464,"bezeichnung":"C 25/30 F4 Dmax 16","ek":98.3735,"preis":175.8,"preis_neu":179.4},{"sorte":153484,"bezeichnung":"C 25/30 F4 Dmax 32","ek":92.823,"preis":172.8,"preis_neu":176.29999999999998},{"sorte":153484,"bezeichnung":"C 25/30 F4 Dmax 32","ek":92.823,"preis":172.8,"preis_neu":176.29999999999998},{"sorte":153564,"bezeichnung":"C 25/30 F5 Dmax 16","ek":94.1396,"preis":172,"preis_neu":175.5},{"sorte":153564,"bezeichnung":"C 25/30 F5 Dmax 16","ek":94.1396,"preis":172,"preis_neu":175.5},{"sorte":153584,"bezeichnung":"C 25/30 F5 Dmax 32","ek":89.4396,"preis":169,"preis_neu":172.4},{"sorte":153584,"bezeichnung":"C 25/30 F5 Dmax 32","ek":89.4396,"preis":169,"preis_neu":172.4},{"sorte":156364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":92.3861,"preis":176.4,"preis_neu":180},{"sorte":156364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":92.3861,"preis":176.4,"preis_neu":180},{"sorte":156384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":91.3453,"preis":173.4,"preis_neu":176.9},{"sorte":156384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":91.3453,"preis":173.4,"preis_neu":176.9},{"sorte":159364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":96.1048,"preis":174.4,"preis_neu":177.9},{"sorte":159384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":94.7597,"preis":171.4,"preis_neu":174.9},{"sorte":163354,"bezeichnung":"C 30/37 F3 Dmax 8","ek":97.3698,"preis":179.2,"preis_neu":182.79999999999998},{"sorte":163354,"bezeichnung":"C 30/37 F3 Dmax 8","ek":97.3698,"preis":179.2,"preis_neu":182.79999999999998},{"sorte":163364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":94.8055,"preis":174.2,"preis_neu":177.7},{"sorte":163364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":94.8055,"preis":174.2,"preis_neu":177.7},{"sorte":163384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":93.4592,"preis":171.2,"preis_neu":174.7},{"sorte":163384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":93.4592,"preis":171.2,"preis_neu":174.7},{"sorte":16344410,"bezeichnung":null,"ek":null,"preis":193.5,"preis_neu":197.4},{"sorte":16344500,"bezeichnung":null,"ek":null,"preis":0,"preis_neu":0},{"sorte":16344710,"bezeichnung":null,"ek":null,"preis":0,"preis_neu":0},{"sorte":164464,"bezeichnung":null,"ek":null,"preis":179.3,"preis_neu":182.9},{"sorte":165354,"bezeichnung":"C 30/37 F3 Dmax 8","ek":100.2236,"preis":183.4,"preis_neu":187.1},{"sorte":165354,"bezeichnung":"C 30/37 F3 Dmax 8","ek":100.2236,"preis":183.4,"preis_neu":187.1},{"sorte":165364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":98.1304,"preis":178.4,"preis_neu":182},{"sorte":165364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":98.1304,"preis":178.4,"preis_neu":182},{"sorte":165384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":96.6815,"preis":175.4,"preis_neu":179},{"sorte":165384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":96.6815,"preis":175.4,"preis_neu":179},{"sorte":165464,"bezeichnung":"C 30/37 F4 Dmax 16","ek":95.7493,"preis":179.3,"preis_neu":182.9},{"sorte":165467,"bezeichnung":null,"ek":null,"preis":168.8,"preis_neu":172.2},{"sorte":165484,"bezeichnung":"C 30/37 F4 Dmax 32","ek":97.0203,"preis":176.3,"preis_neu":179.9},{"sorte":165484,"bezeichnung":"C 30/37 F4 Dmax 32","ek":97.0203,"preis":176.3,"preis_neu":179.9},{"sorte":165487,"bezeichnung":null,"ek":null,"preis":176.3,"preis_neu":179.9},{"sorte":167366,"bezeichnung":null,"ek":null,"preis":179.8,"preis_neu":183.4},{"sorte":167564,"bezeichnung":"C 30/37 F5 Dmax 16","ek":96.7846,"preis":180.9,"preis_neu":184.6},{"sorte":167564,"bezeichnung":"C 30/37 F5 Dmax 16","ek":96.7846,"preis":180.9,"preis_neu":184.6},{"sorte":167584,"bezeichnung":"C 30/37 F5 Dmax 32","ek":91.8801,"preis":177.9,"preis_neu":181.5},{"sorte":167584,"bezeichnung":"C 30/37 F5 Dmax 32","ek":91.8801,"preis":177.9,"preis_neu":181.5},{"sorte":169364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":97.5391,"preis":178.6,"preis_neu":182.2},{"sorte":169367,"bezeichnung":null,"ek":null,"preis":178.6,"preis_neu":182.2},{"sorte":169384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":99.9119,"preis":175.6,"preis_neu":179.2},{"sorte":169586,"bezeichnung":null,"ek":null,"preis":177.9,"preis_neu":181.5},{"sorte":173354,"bezeichnung":"C 35/45 F3 Dmax 8","ek":101.4693,"preis":187.4,"preis_neu":191.2},{"sorte":173354,"bezeichnung":"C 35/45 F3 Dmax 8","ek":101.4693,"preis":187.4,"preis_neu":191.2},{"sorte":173364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":98.1648,"preis":182.4,"preis_neu":186.1},{"sorte":173364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":98.1648,"preis":182.4,"preis_neu":186.1},{"sorte":173384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":96.578,"preis":179.4,"preis_neu":183},{"sorte":173384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":96.578,"preis":179.4,"preis_neu":183},{"sorte":175364,"bezeichnung":null,"ek":null,"preis":181.9,"preis_neu":185.6},{"sorte":177354,"bezeichnung":"C 35/45 F3 Dmax 8","ek":100.0667,"preis":185.3,"preis_neu":189.1},{"sorte":177354,"bezeichnung":"C 35/45 F3 Dmax 8","ek":100.0667,"preis":185.3,"preis_neu":189.1},{"sorte":177357,"bezeichnung":null,"ek":null,"preis":185.3,"preis_neu":189.1},{"sorte":177364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":98.2558,"preis":180.3,"preis_neu":184},{"sorte":177364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":98.2558,"preis":180.3,"preis_neu":184},{"sorte":177367,"bezeichnung":null,"ek":null,"preis":180.3,"preis_neu":184},{"sorte":177384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":96.7289,"preis":177.3,"preis_neu":180.9},{"sorte":177384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":96.7289,"preis":177.3,"preis_neu":180.9},{"sorte":178354,"bezeichnung":"C 35/45 F3 Dmax 8","ek":103.0828,"preis":186.9,"preis_neu":190.7},{"sorte":178354,"bezeichnung":"C 35/45 F3 Dmax 8","ek":103.0828,"preis":186.9,"preis_neu":190.7},{"sorte":178364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":101.2014,"preis":181.9,"preis_neu":185.6},{"sorte":178364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":101.2014,"preis":181.9,"preis_neu":185.6},{"sorte":178384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":98.2272,"preis":178.9,"preis_neu":182.5},{"sorte":178384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":98.2272,"preis":178.9,"preis_neu":182.5},{"sorte":179364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":100.8354,"preis":183.4,"preis_neu":187.1},{"sorte":179384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":99.0037,"preis":180.4,"preis_neu":184.1},{"sorte":179568,"bezeichnung":"C 35/45 F5 Dmax 16","ek":101.8743,"preis":185.7,"preis_neu":189.5},{"sorte":179568,"bezeichnung":"C 35/45 F5 Dmax 16","ek":101.8743,"preis":185.7,"preis_neu":189.5},{"sorte":179588,"bezeichnung":"C 35/45 F5 Dmax 32","ek":99.223,"preis":182.7,"preis_neu":186.4},{"sorte":179588,"bezeichnung":"C 35/45 F5 Dmax 32","ek":99.223,"preis":182.7,"preis_neu":186.4},{"sorte":18334410,"bezeichnung":null,"ek":null,"preis":219.5,"preis_neu":223.9},{"sorte":198354,"bezeichnung":null,"ek":null,"preis":194.5,"preis_neu":198.4},{"sorte":249364,"bezeichnung":"C 25/30 F2 Dmax 16","ek":98.5304,"preis":182.5,"preis_neu":186.2},{"sorte":249384,"bezeichnung":"C 25/30 F2 Dmax 32","ek":95.7947,"preis":179.5,"preis_neu":183.1},{"sorte":253354,"bezeichnung":"C 25/30 F3 Dmax 8","ek":94.7322,"preis":178.6,"preis_neu":182.2},{"sorte":253354,"bezeichnung":"C 25/30 F3 Dmax 8","ek":94.7322,"preis":178.6,"preis_neu":182.2},{"sorte":253364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":92.2231,"preis":173.6,"preis_neu":177.1},{"sorte":253364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":92.2231,"preis":173.6,"preis_neu":177.1},{"sorte":253384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":90.6377,"preis":170.6,"preis_neu":174.1},{"sorte":253384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":90.6377,"preis":170.6,"preis_neu":174.1},{"sorte":263354,"bezeichnung":"C 25/30 F3 Dmax 8","ek":97.6011,"preis":185.8,"preis_neu":189.6},{"sorte":263354,"bezeichnung":"C 25/30 F3 Dmax 8","ek":97.6011,"preis":185.8,"preis_neu":189.6},{"sorte":263364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":96.7191,"preis":180.8,"preis_neu":184.5},{"sorte":263364,"bezeichnung":"C 25/30 F3 Dmax 16","ek":96.7191,"preis":180.8,"preis_neu":184.5},{"sorte":263384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":94.5315,"preis":177.8,"preis_neu":181.4},{"sorte":263384,"bezeichnung":"C 25/30 F3 Dmax 32","ek":94.5315,"preis":177.8,"preis_neu":181.4},{"sorte":266364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":96.1833,"preis":177.6,"preis_neu":181.2},{"sorte":266364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":96.1833,"preis":177.6,"preis_neu":181.2},{"sorte":266384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":94.0195,"preis":174.6,"preis_neu":178.1},{"sorte":266384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":94.0195,"preis":174.6,"preis_neu":178.1},{"sorte":267367,"bezeichnung":null,"ek":null,"preis":177.6,"preis_neu":181.2},{"sorte":269364,"bezeichnung":null,"ek":null,"preis":181.2,"preis_neu":184.9},{"sorte":365364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":98.5784,"preis":189.1,"preis_neu":192.9},{"sorte":365364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":98.5784,"preis":189.1,"preis_neu":192.9},{"sorte":365384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":94.772,"preis":186.1,"preis_neu":189.9},{"sorte":365384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":94.772,"preis":186.1,"preis_neu":189.9},{"sorte":366364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":96.1833,"preis":190.2,"preis_neu":194.1},{"sorte":366364,"bezeichnung":"C 30/37 F3 Dmax 16","ek":96.1833,"preis":190.2,"preis_neu":194.1},{"sorte":366384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":93.7178,"preis":187.2,"preis_neu":191},{"sorte":366384,"bezeichnung":"C 30/37 F3 Dmax 32","ek":93.7178,"preis":187.2,"preis_neu":191},{"sorte":379364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":102.0876,"preis":192.5,"preis_neu":196.4},{"sorte":379364,"bezeichnung":"C 35/45 F3 Dmax 16","ek":102.0876,"preis":192.5,"preis_neu":196.4},{"sorte":379384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":98.2272,"preis":189.5,"preis_neu":193.29999999999998},{"sorte":379384,"bezeichnung":"C 35/45 F3 Dmax 32","ek":98.2272,"preis":189.5,"preis_neu":193.29999999999998},{"sorte":453367,"bezeichnung":null,"ek":null,"preis":179.2,"preis_neu":182.79999999999998},{"sorte":"453367**","bezeichnung":"C 25/30 F3 Dmax 16","ek":88.193,"preis":null,"preis_neu":null},{"sorte":453387,"bezeichnung":null,"ek":null,"preis":176.2,"preis_neu":179.79999999999998},{"sorte":"453387**","bezeichnung":"C 25/30 F3 Dmax 32","ek":100.6936,"preis":null,"preis_neu":null},{"sorte":454367,"bezeichnung":null,"ek":null,"preis":168.9,"preis_neu":172.29999999999998},{"sorte":"454367**","bezeichnung":"C 25/30 F3 Dmax 16","ek":90.0399,"preis":null,"preis_neu":null},{"sorte":454387,"bezeichnung":null,"ek":null,"preis":165.9,"preis_neu":169.29999999999998},{"sorte":"454387**","bezeichnung":"C 25/30 F3 Dmax 32","ek":92.1226,"preis":null,"preis_neu":null},{"sorte":469367,"bezeichnung":null,"ek":null,"preis":183.3,"preis_neu":187},{"sorte":"469367**","bezeichnung":"C 30/37 F3 Dmax 16","ek":96.8999,"preis":null,"preis_neu":null},{"sorte":469387,"bezeichnung":null,"ek":null,"preis":180.3,"preis_neu":184},{"sorte":"469387**","bezeichnung":"C 30/37 F3 Dmax 32","ek":94.6328,"preis":null,"preis_neu":null},{"sorte":479367,"bezeichnung":null,"ek":null,"preis":187.8,"preis_neu":191.6},{"sorte":"479367**","bezeichnung":"C 35/45 F3 Dmax 16","ek":93.3424,"preis":null,"preis_neu":null},{"sorte":479387,"bezeichnung":null,"ek":null,"preis":184.8,"preis_neu":188.5},{"sorte":"479387**","bezeichnung":"C 35/45 F3 Dmax 32","ek":101.6665,"preis":null,"preis_neu":null}];
+
+const SEED_PARAMETER = {
+  lkwKostenProStunde: 94.65,      // M9 – EUR/h Fahrzeugkosten
+  standardLadung: 6,               // Basis für Fuhrenanzahl (kleinstes Fahrzeug) – bewusst FEST, siehe Hinweis im Tool
+  mischenProM3: 10.8,               // D26 – Mischkosten EUR/m³
+  mindermengeZuschlagProM3: 18,     // O21-Satz – Zuschlag je fehlendem m³ bei Teilladung
+  energieZuschlagProM3: 9,          // O22 – Energiekostenzuschlag EUR/m³
+  transportZuschlagProM3: 4.5,      // O23 / D19 – Frachtkosten (Maut) EUR/m³, jetzt mit D19 verknüpft (war in Excel hart codiert)
+  werkServiceZuschlagProM3: 4.5,    // O24 – Werk-Service bei Selbstabholung
+  selbstabholerVerguetungProM3: 6,  // O25 – Gutschrift bei Selbstabholung
+  verzoegererZuschlagProM3: 4,      // O26 – Zuschlag bei Verzögerer
+  minRoherlösProzent: 0.35,         // F37 – Mindestroherlös (intern, von GL zu bestätigen)
+  dbZielProzent: 0.20,              // F39 – DB1-Zielwert (repariert: war in Excel nie aktiv, Vergleich mit "20" statt "20%")
+  minDbProzent: 0.12,               // F40 – absolute Mindest-DB1-Grenze
+  preiswechselDatum: "2026-06-15"   // Stichtag für Preisspalte "Preis 15.06.26"
+};
+
+let sorten = [];       // aktuelle Sortenliste (aus Firebase oder Seed)
+let parameter = {...SEED_PARAMETER};
+let kunden = [];       // Kundenstammdaten
+let bauvorhaben = [];  // Bauvorhaben-Stammdaten
+let projekte = {};     // id -> Kalkulation
+let currentId = null;  // aktuell bearbeitete Kalkulation (null = neu/ungespeichert)
+let currentDraft = null;
+let unsavedDirty = false;
+
+function toast(msg, isErr){
+  const root = document.getElementById('toastRoot');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' err' : '');
+  el.innerHTML = '<span class="stripe"></span><span>' + msg + '</span>';
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 3600);
+}
+
+async function boot(){
+  // Sorten laden, ggf. seeden
+  const sortenSnap = await get(ref(db, 'settings/sorten'));
+  if (!sortenSnap.exists()) {
+    const seedObj = {};
+    SEED_SORTEN.forEach(s => { seedObj[String(s.sorte)] = s; });
+    await set(ref(db, 'settings/sorten'), seedObj);
+  }
+  onValue(ref(db, 'settings/sorten'), (snap) => {
+    const val = snap.val() || {};
+    sorten = Object.values(val).sort((a,b) => String(a.sorte).localeCompare(String(b.sorte)));
+    renderSortenDatalist();
+  });
+
+  // Parameter laden, ggf. seeden
+  const paramSnap = await get(ref(db, 'settings/parameter'));
+  if (!paramSnap.exists()) {
+    await set(ref(db, 'settings/parameter'), SEED_PARAMETER);
+  }
+  onValue(ref(db, 'settings/parameter'), (snap) => {
+    parameter = { ...SEED_PARAMETER, ...(snap.val() || {}) };
+    if (currentDraft) render();
+  });
+
+  // Kunden- und Bauvorhaben-Stammdaten laden (live)
+  onValue(ref(db, 'settings/kunden'), (snap) => {
+    const val = snap.val() || {};
+    kunden = Object.entries(val).map(([id,k]) => ({...k, id})).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    renderKundenDatalist();
+  });
+  onValue(ref(db, 'settings/bauvorhaben'), (snap) => {
+    const val = snap.val() || {};
+    bauvorhaben = Object.entries(val).map(([id,b]) => ({...b, id})).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    renderBauvorhabenDatalist();
+  });
+
+  // Kalkulationen laden (live)
+  onValue(ref(db, 'kalkulationen'), (snap) => {
+    projekte = snap.val() || {};
+    renderProjectList();
+    if (currentId && !projekte[currentId]) {
+      // aktuell offenes Projekt wurde gelöscht (z.B. an anderem Rechner)
+    }
+  });
+
+  if (isChef()){
+    showChefEmptyState();
+  } else {
+    newDraft();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   4) BERECHNUNGSLOGIK  (repliziert & korrigiert nach "11_05_Kalkulation
+      für den Angebotsersteller.xlsx", Blatt "Kalkulation mit NEU EKZ")
+   --------------------------------------------------------------------- */
+function findSorte(code){
+  if (code == null || code === '') return null;
+  return sorten.find(s => String(s.sorte) === String(code)) || null;
+}
+
+function priceForSorte(sorteObj, datumISO){
+  if (!sorteObj) return 0;
+  const cutoff = parameter.preiswechselDatum;
+  if (datumISO && cutoff && datumISO >= cutoff && sorteObj.preis_neu != null) {
+    return sorteObj.preis_neu;
+  }
+  return sorteObj.preis != null ? sorteObj.preis : 0;
+}
+
+function round2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+function calcKalkulation(d){
+  const sorteObj = findSorte(d.sorte);
+  const materialkosten = round2(sorteObj && sorteObj.ek != null ? sorteObj.ek : 0);   // D13
+  const sortenpreis = round2(priceForSorte(sorteObj, d.datum));                        // D30
+
+  const volumen = Number(d.volumen) || 0;                                            // D10
+  const ladungProFahrzeug = Number(d.ladungProFahrzeug) || parameter.standardLadung;  // D17
+  const fahrtdauerMin = Number(d.fahrtdauerMin) || 0;                                 // F24
+  const fahrtdauerH = fahrtdauerMin / 60;                                             // D24
+  const selbstabholung = fahrtdauerH === 0;
+
+  // P9 – Fuhrenanzahl: bewusst auf Basis des kleinsten Fahrzeugs (Standardladung),
+  // unabhängig von der tatsächlich geplanten Ladung D17 (so von Pascal bestätigt:
+  // konservative Tourenplanung mit dem 6m³-Fahrzeug, auch wenn 8m³-Fahrzeuge existieren).
+  const standardLadung = parameter.standardLadung;
+  const fuhrenAnzahl = volumen < standardLadung ? 1 : Math.floor(volumen / standardLadung); // P9
+
+  const transportkostenJeFuhre = parameter.lkwKostenProStunde * fahrtdauerH;           // M10
+  const transportkostenProM3 = volumen > 0
+    ? (fahrtdauerH * parameter.lkwKostenProStunde * fuhrenAnzahl / volumen)
+    : 0;                                                                              // M11
+
+  const selbstkostenI = transportkostenProM3 + parameter.mischenProM3;                // D28
+
+  // -------- Zuschläge (pro m³) --------
+  const mindermengeSatz = (!selbstabholung && ladungProFahrzeug < standardLadung)
+    ? parameter.mindermengeZuschlagProM3 : 0;                                          // O21
+  const mindermengeMenge = standardLadung - ladungProFahrzeug;                         // P21
+  const mindermengeBetrag = mindermengeSatz * mindermengeMenge;                        // Q21
+
+  const energieSatz = parameter.energieZuschlagProM3;                                  // O22
+  const energieBetrag = energieSatz * volumen;                                         // Q22
+
+  const transportZuschlagSatz = selbstabholung ? 0 : (Number(d.transportZuschlag) >= 0
+    ? Number(d.transportZuschlag) : parameter.transportZuschlagProM3);                 // O23 (jetzt mit D19 verknüpft statt hart codiert)
+  const transportZuschlagBetrag = transportZuschlagSatz * volumen;                     // Q23
+
+  const werkServiceSatz = selbstabholung ? parameter.werkServiceZuschlagProM3 : 0;      // O24
+  const werkServiceBetrag = werkServiceSatz * volumen;                                  // Q24
+
+  const selbstabholerSatz = selbstabholung ? -parameter.selbstabholerVerguetungProM3 : 0; // O25
+  const selbstabholerBetrag = selbstabholerSatz * volumen;                              // Q25
+
+  const verzoegererSatz = d.verzoegerer ? parameter.verzoegererZuschlagProM3 : 0;        // O26
+  const verzoegererBetrag = verzoegererSatz * volumen;                                   // Q26
+
+  const nachlass = Number(d.nachlass) || 0;                                             // D32
+  const angebotspreis = sortenpreis - nachlass;                                          // D34
+  const zuschlaegeProM3 = energieSatz + transportZuschlagSatz + verzoegererSatz + werkServiceSatz + selbstabholerSatz; // G34
+
+  const grundbetrag = angebotspreis * volumen;                                          // Q20
+  const nettobetrag = grundbetrag + mindermengeBetrag + energieBetrag + transportZuschlagBetrag
+                       + werkServiceBetrag + selbstabholerBetrag + verzoegererBetrag;    // Q27
+
+  const materialkostenGesamt = materialkosten * volumen;
+  const rohertragGesamt = nettobetrag - materialkostenGesamt;                            // Q28
+  const selbstkostenGesamt = selbstkostenI * volumen;
+  const db1Gesamt = rohertragGesamt - selbstkostenGesamt;                                // Q29
+  const db1ProzentGesamt = nettobetrag !== 0 ? db1Gesamt / nettobetrag : 0;              // Q30
+
+  const basisProM3 = angebotspreis + zuschlaegeProM3;
+  const roherloesProM3 = basisProM3 - materialkosten;                                    // D36
+  const roherloesProzent = basisProM3 !== 0 ? roherloesProM3 / basisProM3 : 0;           // D37
+  const deckungsbeitragProM3 = roherloesProM3 - selbstkostenI;                           // D39
+  const deckungsbeitragProzent = basisProM3 !== 0 ? deckungsbeitragProM3 / basisProM3 : 0; // D40
+
+  const warnRoherloes = roherloesProzent < parameter.minRoherlösProzent;                 // F37
+  const warnDbZiel = deckungsbeitragProzent < parameter.dbZielProzent;                   // F39 (repariert)
+  const warnMindestDb = deckungsbeitragProzent < parameter.minDbProzent;                 // F40
+
+  return {
+    sorteObj, materialkosten, sortenpreis, fuhrenAnzahl, transportkostenJeFuhre,
+    transportkostenProM3, selbstkostenI, selbstabholung,
+    mindermengeSatz, mindermengeMenge, mindermengeBetrag,
+    energieSatz, energieBetrag,
+    transportZuschlagSatz, transportZuschlagBetrag,
+    werkServiceSatz, werkServiceBetrag,
+    selbstabholerSatz, selbstabholerBetrag,
+    verzoegererSatz, verzoegererBetrag,
+    angebotspreis, zuschlaegeProM3, grundbetrag, nettobetrag,
+    materialkostenGesamt, rohertragGesamt, selbstkostenGesamt, db1Gesamt, db1ProzentGesamt,
+    roherloesProM3, roherloesProzent, deckungsbeitragProM3, deckungsbeitragProzent,
+    warnRoherloes, warnDbZiel, warnMindestDb
+  };
+}
+
+/* ---------------------------------------------------------------------
+   5) RENDERING – Formular
+   --------------------------------------------------------------------- */
+function todayISO(){
+  const t = new Date();
+  return t.toISOString().slice(0,10);
+}
+
+function emptyDraft(){
+  return {
+    id: null,
+    angebotsNr: null,
+    kunde: '', kundenkategorie: 'A-Kunde', bauvorhaben: '',
+    datum: todayISO(),
+    sorte: '', volumen: 20,
+    fahrstreckeKm: 30, fahrtdauerMin: 150, ladungProFahrzeug: 6,
+    transportZuschlag: null, // null => Parameter-Default verwenden (D19)
+    verzoegerer: false,
+    nachlass: 0,
+    freigabeStatus: 'offen', // 'offen' | 'freigegeben' | 'abgelehnt'
+    freigabeVon: '', freigabeDatum: null,
+    createdAt: null, updatedAt: null
+  };
+}
+
+function newDraft(){
+  currentDraft = emptyDraft();
+  currentId = null;
+  unsavedDirty = false;
+  render();
+}
+
+function loadDraft(id){
+  const p = projekte[id];
+  if (!p) return;
+  currentDraft = { ...emptyDraft(), ...p };
+  currentId = id;
+  unsavedDirty = false;
+  render();
+}
+
+function fmtEUR(n){
+  return (n<0?'-':'') + Math.abs(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+}
+function fmtPct(n){
+  return (n*100).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' %';
+}
+function fmtNum(n,dec){
+  return n.toLocaleString('de-DE',{minimumFractionDigits:dec==null?2:dec,maximumFractionDigits:dec==null?2:dec});
+}
+
+function statusBadge(res){
+  if (res.warnMindestDb) return '<span class="badge bad">DB1 kritisch</span>';
+  if (res.warnDbZiel || res.warnRoherloes) return '<span class="badge warn">unter Zielwert</span>';
+  return '<span class="badge ok">i.O.</span>';
+}
+
+function freigabeBadge(status){
+  if (status === 'freigegeben') return '<span class="badge ok">Freigegeben</span>';
+  if (status === 'abgelehnt') return '<span class="badge bad">Abgelehnt</span>';
+  return '<span class="badge warn">Offen</span>';
+}
+
+function freigabeStatusBox(d){
+  const status = d.freigabeStatus || 'offen';
+  if (status === 'freigegeben'){
+    return `<div class="warn-box ok"><b>✓ Freigegeben</b>${d.freigabeVon ? ' von ' + escapeHtml(d.freigabeVon) : ''}${d.freigabeDatum ? ' am ' + new Date(d.freigabeDatum).toLocaleDateString('de-DE') : ''}.</div>`;
+  }
+  if (status === 'abgelehnt'){
+    return `<div class="warn-box bad"><b>✕ Abgelehnt</b>${d.freigabeVon ? ' von ' + escapeHtml(d.freigabeVon) : ''}${d.freigabeDatum ? ' am ' + new Date(d.freigabeDatum).toLocaleDateString('de-DE') : ''}. Bitte Rücksprache halten.</div>`;
+  }
+  return `<div class="warn-box warn"><b>⏳ Noch offen</b> — wartet auf Freigabe durch die Geschäftsleitung.</div>`;
+}
+
+function renderProjectList(){
+  const list = document.getElementById('projectList');
+  const q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+  const entries = Object.entries(projekte)
+    .filter(([id,p]) => {
+      if (!q) return true;
+      return (p.kunde||'').toLowerCase().includes(q)
+        || (p.bauvorhaben||'').toLowerCase().includes(q)
+        || (p.angebotsNr||'').toLowerCase().includes(q);
+    })
+    .sort((a,b) => (b[1].updatedAt||0) - (a[1].updatedAt||0));
+
+  document.getElementById('countInfo').textContent = Object.keys(projekte).length + ' Kalkulationen';
+
+  if (entries.length === 0){
+    list.innerHTML = '<div class="sidebar-empty">Keine Kalkulationen gefunden.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([id,p]) => {
+    const res = calcKalkulation(p);
+    const active = id === currentId ? ' active' : '';
+    return `<div class="project-card${active}" data-id="${id}">
+      <div class="row1"><span>${p.angebotsNr||''}</span><span>${p.datum||''}</span></div>
+      <div class="kunde">${escapeHtml(p.kunde||'(ohne Kunde)')}</div>
+      <div class="bauvorhaben">${escapeHtml(p.bauvorhaben||'')}</div>
+      ${statusBadge(res)} ${freigabeBadge(p.freigabeStatus)}
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.project-card').forEach(el => {
+    el.addEventListener('click', () => {
+      if (unsavedDirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+      loadDraft(el.dataset.id);
+    });
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let sortenDatalistHTML = '';
+function renderSortenDatalist(){
+  sortenDatalistHTML = sorten.map(s =>
+    `<option value="${s.sorte}">${s.sorte} – ${escapeHtml(s.bezeichnung||'—')} (VK ${s.preis!=null?fmtNum(s.preis,2):'–'} €/m³)</option>`
+  ).join('');
+  const dl = document.getElementById('sortenList');
+  if (dl) dl.innerHTML = sortenDatalistHTML;
+}
+
+let kundenDatalistHTML = '';
+function renderKundenDatalist(){
+  kundenDatalistHTML = kunden.map(k => `<option value="${escapeHtml(k.name)}">${escapeHtml(k.kategorie||'')}</option>`).join('');
+  const dl = document.getElementById('kundenList');
+  if (dl) dl.innerHTML = kundenDatalistHTML;
+}
+function findKunde(name){
+  if (!name) return null;
+  const n = String(name).trim().toLowerCase();
+  return kunden.find(k => (k.name||'').trim().toLowerCase() === n) || null;
+}
+
+let bauvorhabenDatalistHTML = '';
+function renderBauvorhabenDatalist(){
+  bauvorhabenDatalistHTML = bauvorhaben.map(b => `<option value="${escapeHtml(b.name)}">${escapeHtml(b.adresse||'')}</option>`).join('');
+  const dl = document.getElementById('bauvorhabenList');
+  if (dl) dl.innerHTML = bauvorhabenDatalistHTML;
+}
+function findBauvorhaben(name){
+  if (!name) return null;
+  const n = String(name).trim().toLowerCase();
+  return bauvorhaben.find(b => (b.name||'').trim().toLowerCase() === n) || null;
+}
+
+function routeUrl(bauvorhabenName){
+  const match = findBauvorhaben(bauvorhabenName);
+  const ziel = encodeURIComponent(((match && match.adresse) || bauvorhabenName || '').trim());
+  return `https://www.google.com/maps/dir/Osterfeld+1,+59846+Sundern/${ziel}`;
+}
+
+function showChefEmptyState(){
+  document.getElementById('mainArea').innerHTML = `
+    <div class="sidebar-empty" style="text-align:left;padding:40px 10px;">
+      <h2 style="margin:0 0 6px 0;">Angebotsfreigabe</h2>
+      <p style="color:var(--grau-700);max-width:480px;">Bitte links ein Angebot auswählen. Angezeigt werden nur bereits von Pascal/Vertrieb fertig gerechnete und gespeicherte Kalkulationen.</p>
+    </div>`;
+}
+
+function render(){
+  if (isChef()){
+    renderChefDetail();
+    return;
+  }
+  const d = currentDraft;
+  const res = calcKalkulation(d);
+  const main = document.getElementById('mainArea');
+
+  main.innerHTML = `
+    <div class="doc-head">
+      <div>
+        <h2>${d.kunde ? escapeHtml(d.kunde) : 'Neue Kalkulation'}</h2>
+        <div class="nr">${d.angebotsNr ? d.angebotsNr : 'noch nicht gespeichert'} · Stand ${d.updatedAt ? new Date(d.updatedAt).toLocaleString('de-DE') : '—'}</div>
+      </div>
+      <div class="doc-actions no-print">
+        <button class="btn-ghost" id="btnDuplicate" ${!currentId?'disabled':''}>Duplizieren</button>
+        <button class="btn-ghost" id="btnPrint">Drucken</button>
+        <button class="btn-danger" id="btnDelete" ${!currentId?'disabled':''}>Löschen</button>
+        <button class="btn-dark" id="btnUebersicht">✦ Übersicht</button>
+        <button class="btn-primary" id="btnSave">Speichern</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Kopfdaten</span></div>
+      <div class="card-body grid c3">
+        <div class="field">
+          <label>Kunde</label>
+          <input type="text" id="f_kunde" list="kundenList" value="${escapeHtml(d.kunde)}">
+        </div>
+        <div class="field">
+          <label>Kundenkategorie</label>
+          <select id="f_kategorie">
+            ${['A-Kunde','B-Kunde','C-Kunde'].map(k => `<option ${d.kundenkategorie===k?'selected':''}>${k}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Datum</label>
+          <input type="date" id="f_datum" value="${d.datum}">
+        </div>
+        <div class="field" style="grid-column:span 2;">
+          <label>Bauvorhaben</label>
+          <input type="text" id="f_bauvorhaben" list="bauvorhabenList" value="${escapeHtml(d.bauvorhaben)}">
+        </div>
+        <div class="field">
+          <label>Route</label>
+          <a class="route-link" href="${routeUrl(d.bauvorhaben)}" target="_blank" rel="noopener">Route prüfen ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Sorte &amp; Menge</span></div>
+      <div class="card-body grid c3">
+        <div class="field">
+          <label>Sorte</label>
+          <input type="text" id="f_sorte" list="sortenList" value="${d.sorte}" placeholder="Sorten-Nr. eingeben oder suchen">
+          <span class="hint">${res.sorteObj ? escapeHtml(res.sorteObj.bezeichnung||'') : 'Sorte nicht gefunden'}</span>
+        </div>
+        <div class="field">
+          <label>Auftragsvolumen</label>
+          <input type="number" id="f_volumen" value="${d.volumen}" step="0.5" min="0">
+          <span class="unit">m³ je Sorte</span>
+        </div>
+        <div class="field readonly">
+          <label>Materialkosten</label>
+          <input type="text" readonly value="${fmtNum(res.materialkosten,2)} €/m³">
+        </div>
+        <div class="field readonly">
+          <label>Sortenpreis (Preisliste)</label>
+          <input type="text" readonly value="${fmtNum(res.sortenpreis,2)} €/m³">
+          <span class="hint">Stichtag ${parameter.preiswechselDatum} für Preis 2 – automatisch je Angebotsdatum</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Transport</span></div>
+      <div class="card-body grid c4">
+        <div class="field">
+          <label>Fahrstrecke (einfach)</label>
+          <input type="number" id="f_fahrstrecke" value="${d.fahrstreckeKm}" step="1" min="0">
+          <span class="unit">km</span>
+        </div>
+        <div class="field">
+          <label>Fahrtdauer (hin &amp; zurück)</label>
+          <input type="number" id="f_fahrtdauer" value="${d.fahrtdauerMin}" step="1" min="0">
+          <span class="unit">Minuten · 0 = Selbstabholung</span>
+        </div>
+        <div class="field">
+          <label>Ladung pro Fahrzeug</label>
+          <input type="number" id="f_ladung" value="${d.ladungProFahrzeug}" step="0.5" min="0">
+          <span class="unit">m³ (Standard ${parameter.standardLadung} m³)</span>
+        </div>
+        <div class="field readonly">
+          <label>Fuhren (Planung)</label>
+          <input type="text" readonly value="${res.fuhrenAnzahl}">
+          <span class="hint">Basis: kleinstes Fahrzeug (${parameter.standardLadung} m³), fest</span>
+        </div>
+        <div class="field">
+          <label>Frachtkosten (Maut)</label>
+          <input type="number" id="f_frachtkosten" value="${d.transportZuschlag != null ? d.transportZuschlag : parameter.transportZuschlagProM3}" step="0.1" min="0">
+          <span class="unit">€/m³ (entfällt bei Selbstabholung)</span>
+        </div>
+        <div class="field readonly">
+          <label>Transportkosten</label>
+          <input type="text" readonly value="${fmtNum(res.transportkostenProM3,2)} €/m³">
+        </div>
+        <div class="field readonly">
+          <label>Selbstkosten I</label>
+          <input type="text" readonly value="${fmtNum(res.selbstkostenI,2)} €/m³">
+          <span class="hint">Transport + Mischen</span>
+        </div>
+        <div class="field">
+          <div class="checkbox-row">
+            <input type="checkbox" id="f_verzoegerer" ${d.verzoegerer?'checked':''}>
+            <label for="f_verzoegerer">Verzögerer eingesetzt</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Nettobetrag – Aufschlüsselung</span></div>
+      <div class="card-body">
+        <table class="breakdown">
+          <thead><tr><th>Position</th><th class="num">Satz</th><th class="num">Menge</th><th class="num">Betrag</th></tr></thead>
+          <tbody>
+            <tr><td>Grundbetrag (Angebotspreis × Menge)</td><td class="num">${fmtNum(res.angebotspreis,2)} €/m³</td><td class="num">${fmtNum(d.volumen,1)} m³</td><td class="num">${fmtEUR(res.grundbetrag)}</td></tr>
+            <tr><td>Mindermengenzuschlag</td><td class="num">${fmtNum(res.mindermengeSatz,2)} €/m³</td><td class="num">${fmtNum(res.mindermengeMenge,1)} m³</td><td class="num">${fmtEUR(res.mindermengeBetrag)}</td></tr>
+            <tr><td>Energiekostenzuschlag</td><td class="num">${fmtNum(res.energieSatz,2)} €/m³</td><td class="num">${fmtNum(d.volumen,1)} m³</td><td class="num">${fmtEUR(res.energieBetrag)}</td></tr>
+            <tr><td>Transportkosten (Maut)</td><td class="num">${fmtNum(res.transportZuschlagSatz,2)} €/m³</td><td class="num">${fmtNum(d.volumen,1)} m³</td><td class="num">${fmtEUR(res.transportZuschlagBetrag)}</td></tr>
+            <tr><td>Werk-Service (Selbstabholung)</td><td class="num">${fmtNum(res.werkServiceSatz,2)} €/m³</td><td class="num">${fmtNum(d.volumen,1)} m³</td><td class="num">${fmtEUR(res.werkServiceBetrag)}</td></tr>
+            <tr><td>Selbstabholervergütung</td><td class="num">${fmtNum(res.selbstabholerSatz,2)} €/m³</td><td class="num">${fmtNum(d.volumen,1)} m³</td><td class="num">${fmtEUR(res.selbstabholerBetrag)}</td></tr>
+            <tr><td>Verzögerer</td><td class="num">${fmtNum(res.verzoegererSatz,2)} €/m³</td><td class="num">${fmtNum(d.volumen,1)} m³</td><td class="num">${fmtEUR(res.verzoegererBetrag)}</td></tr>
+            <tr class="total"><td>Nettobetrag</td><td class="num"></td><td class="num"></td><td class="num">${fmtEUR(res.nettobetrag)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Preis &amp; Nachlass</span></div>
+      <div class="card-body grid c3">
+        <div class="field readonly">
+          <label>Sortenpreis</label>
+          <input type="text" readonly value="${fmtNum(res.sortenpreis,2)} €/m³">
+        </div>
+        <div class="field">
+          <label>Nachlass</label>
+          <input type="number" id="f_nachlass" value="${d.nachlass}" step="0.5">
+          <span class="unit">€/m³</span>
+        </div>
+        <div class="field readonly">
+          <label>Angebotspreis</label>
+          <input type="text" readonly value="${fmtNum(res.angebotspreis,2)} €/m³">
+          <span class="hint">zzgl. ${fmtNum(res.zuschlaegeProM3,2)} €/m³ Zuschläge</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Ergebnis</span></div>
+      <div class="card-body">
+        <div class="kpi-grid">
+          <div class="kpi ${res.roherloesProM3<0?'neg':'pos'}"><div class="label">Roherlös</div><div class="value">${fmtNum(res.roherloesProM3,2)} €/m³</div></div>
+          <div class="kpi ${res.roherloesProzent<parameter.minRoherlösProzent?'neg':'pos'}"><div class="label">Roherlös %</div><div class="value">${fmtPct(res.roherloesProzent)}</div></div>
+          <div class="kpi ${res.deckungsbeitragProM3<0?'neg':'pos'}"><div class="label">Deckungsbeitrag (DB1)</div><div class="value">${fmtNum(res.deckungsbeitragProM3,2)} €/m³</div></div>
+          <div class="kpi ${res.deckungsbeitragProzent<parameter.minDbProzent?'neg':'pos'}"><div class="label">DB1 %</div><div class="value">${fmtPct(res.deckungsbeitragProzent)}</div></div>
+        </div>
+        <div class="kpi-grid" style="margin-top:10px;">
+          <div class="kpi"><div class="label">Rohertrag gesamt</div><div class="value">${fmtEUR(res.rohertragGesamt)}</div></div>
+          <div class="kpi"><div class="label">DB1 gesamt</div><div class="value">${fmtEUR(res.db1Gesamt)}</div></div>
+          <div class="kpi"><div class="label">Nettobetrag Auftrag</div><div class="value">${fmtEUR(res.nettobetrag)}</div></div>
+          <div class="kpi"><div class="label">DB1 % (gesamt)</div><div class="value">${fmtPct(res.db1ProzentGesamt)}</div></div>
+        </div>
+        ${res.roherloesProM3 < 0 ? `<div class="warn-box bad"><b>⚠</b> Roherlös negativ! Diese Kalkulation macht Verlust bereits vor Abzug der Transport-/Mischkosten.</div>` : ''}
+        ${res.warnRoherloes ? `<div class="warn-box bad"><b>⚠</b> Mindestroherlös unterschritten (Ziel ≥ ${fmtPct(parameter.minRoherlösProzent)}, intern – von GL zu bestätigen).</div>` : ''}
+        ${res.warnDbZiel && !res.warnMindestDb ? `<div class="warn-box warn"><b>⚠</b> DB1 unter Zielwert von ${fmtPct(parameter.dbZielProzent)}.</div>` : ''}
+        ${res.warnMindestDb ? `<div class="warn-box bad"><b>⚠</b> Mindest-Deckungsbeitrag unterschritten (Grenze ${fmtPct(parameter.minDbProzent)})!</div>` : ''}
+        ${!res.warnRoherloes && !res.warnDbZiel && !res.warnMindestDb ? `<div class="warn-box ok"><b>✓</b> Alle Kennzahlen im grünen Bereich.</div>` : ''}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Freigabe</span></div>
+      <div class="card-body">
+        ${freigabeStatusBox(d)}
+        <div class="sig-grid">
+          <div class="sig-line">Unterschrift Vertrieb — ${new Date().toLocaleDateString('de-DE')}</div>
+          <div class="sig-line">Genehmigung GL${d.freigabeVon ? ' — ' + escapeHtml(d.freigabeVon) + (d.freigabeDatum ? ' (' + new Date(d.freigabeDatum).toLocaleDateString('de-DE') + ')' : '') : ' — noch offen'}</div>
+        </div>
+      </div>
+    </section>
+  `;
+
+  const dl = document.createElement('datalist');
+  dl.id = 'sortenList';
+  dl.innerHTML = sortenDatalistHTML;
+  main.appendChild(dl);
+
+  const dlK = document.createElement('datalist');
+  dlK.id = 'kundenList';
+  dlK.innerHTML = kundenDatalistHTML;
+  main.appendChild(dlK);
+
+  const dlB = document.createElement('datalist');
+  dlB.id = 'bauvorhabenList';
+  dlB.innerHTML = bauvorhabenDatalistHTML;
+  main.appendChild(dlB);
+
+  attachFormHandlers();
+}
+
+/* ---------------------------------------------------------------------
+   CHEF-ANSICHT – nur Endpreis/Marge, Freigabe & Nachlass-Korrektur
+   --------------------------------------------------------------------- */
+function renderChefDetail(){
+  const id = currentId;
+  const main = document.getElementById('mainArea');
+  if (!id || !projekte[id]){
+    showChefEmptyState();
+    return;
+  }
+  const d = projekte[id];
+  const res = calcKalkulation(d);
+
+  main.innerHTML = `
+    <div class="doc-head">
+      <div>
+        <h2>${escapeHtml(d.kunde||'')}</h2>
+        <div class="nr">${d.angebotsNr||''} · ${escapeHtml(d.bauvorhaben||'')} · ${d.datum||''}</div>
+      </div>
+      <div class="doc-actions no-print">
+        <button class="btn-ghost" id="btnChefPrint">Drucken</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Angebot</span></div>
+      <div class="card-body grid c3">
+        <div class="field readonly"><label>Kunde</label><input type="text" readonly value="${escapeHtml(d.kunde||'')}"></div>
+        <div class="field readonly"><label>Kundenkategorie</label><input type="text" readonly value="${escapeHtml(d.kundenkategorie||'')}"></div>
+        <div class="field readonly"><label>Bauvorhaben</label><input type="text" readonly value="${escapeHtml(d.bauvorhaben||'')}"></div>
+        <div class="field readonly"><label>Sorte</label><input type="text" readonly value="${d.sorte} ${res.sorteObj?('– '+escapeHtml(res.sorteObj.bezeichnung||'')):''}"></div>
+        <div class="field readonly"><label>Auftragsvolumen</label><input type="text" readonly value="${fmtNum(d.volumen,1)} m³"></div>
+        <div class="field readonly"><label>Nettobetrag Auftrag</label><input type="text" readonly value="${fmtEUR(res.nettobetrag)}"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Endpreis &amp; Marge</span></div>
+      <div class="card-body">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="label">Endpreis (Angebotspreis)</div><div class="value">${fmtNum(res.angebotspreis,2)} €/m³</div></div>
+          <div class="kpi ${res.roherloesProzent<parameter.minRoherlösProzent?'neg':'pos'}"><div class="label">Roherlös %</div><div class="value">${fmtPct(res.roherloesProzent)}</div></div>
+          <div class="kpi ${res.deckungsbeitragProM3<0?'neg':'pos'}"><div class="label">DB1 €/m³</div><div class="value">${fmtNum(res.deckungsbeitragProM3,2)} €/m³</div></div>
+          <div class="kpi ${res.deckungsbeitragProzent<parameter.minDbProzent?'neg':'pos'}"><div class="label">DB1 %</div><div class="value">${fmtPct(res.deckungsbeitragProzent)}</div></div>
+        </div>
+        ${res.warnRoherloes ? `<div class="warn-box bad"><b>⚠</b> Mindestroherlös unterschritten (Ziel ≥ ${fmtPct(parameter.minRoherlösProzent)}).</div>` : ''}
+        ${res.warnDbZiel && !res.warnMindestDb ? `<div class="warn-box warn"><b>⚠</b> DB1 unter Zielwert von ${fmtPct(parameter.dbZielProzent)}.</div>` : ''}
+        ${res.warnMindestDb ? `<div class="warn-box bad"><b>⚠</b> Mindest-Deckungsbeitrag unterschritten (Grenze ${fmtPct(parameter.minDbProzent)})!</div>` : ''}
+        ${!res.warnRoherloes && !res.warnDbZiel && !res.warnMindestDb ? `<div class="warn-box ok"><b>✓</b> Alle Kennzahlen im grünen Bereich.</div>` : ''}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Preisnachlass-Korrektur</span></div>
+      <div class="card-body grid c3">
+        <div class="field">
+          <label>Nachlass</label>
+          <input type="number" id="chef_nachlass" value="${d.nachlass||0}" step="0.5">
+          <span class="unit">€/m³ — aktuell gespeichert: ${fmtNum(d.nachlass||0,2)} €/m³</span>
+        </div>
+        <div class="field readonly">
+          <label>Neuer Endpreis (Vorschau)</label>
+          <input type="text" readonly id="chef_preview" value="${fmtNum(res.angebotspreis,2)} €/m³">
+        </div>
+        <div class="field" style="justify-content:flex-end;">
+          <button class="btn-dark" id="btnChefNachlassSpeichern">Nachlass übernehmen</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><span><span class="stripe"></span>Freigabe</span></div>
+      <div class="card-body">
+        ${freigabeStatusBox(d)}
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn-primary" id="btnChefFreigeben">✓ Freigeben</button>
+          <button class="btn-danger" id="btnChefAblehnen">✕ Ablehnen</button>
+        </div>
+      </div>
+    </section>
+  `;
+
+  document.getElementById('btnChefPrint').addEventListener('click', () => window.print());
+
+  const nachlassInput = document.getElementById('chef_nachlass');
+  const preview = document.getElementById('chef_preview');
+  nachlassInput.addEventListener('input', () => {
+    const draftCopy = { ...d, nachlass: Number(nachlassInput.value) || 0 };
+    const previewRes = calcKalkulation(draftCopy);
+    preview.value = fmtNum(previewRes.angebotspreis,2) + ' €/m³';
+  });
+
+  document.getElementById('btnChefNachlassSpeichern').addEventListener('click', async () => {
+    try{
+      await update(ref(db, 'kalkulationen/' + id), {
+        nachlass: Number(nachlassInput.value) || 0,
+        updatedAt: Date.now()
+      });
+      toast('Nachlass aktualisiert.');
+    } catch(err){
+      toast('Speichern fehlgeschlagen: ' + err.message, true);
+    }
+  });
+
+  document.getElementById('btnChefFreigeben').addEventListener('click', () => chefSetFreigabe(id, 'freigegeben'));
+  document.getElementById('btnChefAblehnen').addEventListener('click', () => chefSetFreigabe(id, 'abgelehnt'));
+}
+
+async function chefSetFreigabe(id, status){
+  try{
+    await update(ref(db, 'kalkulationen/' + id), {
+      freigabeStatus: status,
+      freigabeVon: currentUserEmail,
+      freigabeDatum: Date.now(),
+      updatedAt: Date.now()
+    });
+    toast(status === 'freigegeben' ? 'Angebot freigegeben.' : 'Angebot abgelehnt.');
+  } catch(err){
+    toast('Aktion fehlgeschlagen: ' + err.message, true);
+  }
+}
+
+function attachFormHandlers(){
+  const bind = (id, prop, parseFn) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const raw = el.type === 'checkbox' ? el.checked : el.value;
+      currentDraft[prop] = parseFn ? parseFn(raw) : raw;
+      unsavedDirty = true;
+      render();
+      // Fokus wiederherstellen, da render() das Formular neu aufbaut
+      const again = document.getElementById(id);
+      if (again) { again.focus(); if (again.setSelectionRange && again.type==='text'){ try{ again.setSelectionRange(again.value.length, again.value.length);}catch(e){} } }
+    });
+  };
+  bind('f_kunde','kunde');
+  bind('f_kategorie','kundenkategorie');
+  bind('f_datum','datum');
+  bind('f_bauvorhaben','bauvorhaben');
+  bind('f_sorte','sorte');
+  bind('f_volumen','volumen', v => Number(v));
+  bind('f_fahrstrecke','fahrstreckeKm', v => Number(v));
+  bind('f_fahrtdauer','fahrtdauerMin', v => Number(v));
+  bind('f_ladung','ladungProFahrzeug', v => Number(v));
+  bind('f_frachtkosten','transportZuschlag', v => Number(v));
+  bind('f_verzoegerer','verzoegerer', v => !!v);
+  bind('f_nachlass','nachlass', v => Number(v));
+
+  const kundeEl = document.getElementById('f_kunde');
+  if (kundeEl) kundeEl.addEventListener('change', () => {
+    const match = findKunde(kundeEl.value);
+    if (match && match.kategorie){
+      currentDraft.kundenkategorie = match.kategorie;
+      unsavedDirty = true;
+      render();
+    }
+  });
+
+  document.getElementById('btnSave').addEventListener('click', saveCurrent);
+  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+  document.getElementById('btnUebersicht').addEventListener('click', () => openUebersichtModal(currentDraft));
+  const delBtn = document.getElementById('btnDelete');
+  if (delBtn) delBtn.addEventListener('click', deleteCurrent);
+  const dupBtn = document.getElementById('btnDuplicate');
+  if (dupBtn) dupBtn.addEventListener('click', duplicateCurrent);
+}
+
+/* ---------------------------------------------------------------------
+   ÜBERSICHT – kompakte, moderne Zusammenfassung für den Kalkulationsersteller
+   --------------------------------------------------------------------- */
+function openUebersichtModal(d){
+  const res = calcKalkulation(d);
+  const okAlles = !res.warnRoherloes && !res.warnDbZiel && !res.warnMindestDb;
+  const accent = res.warnMindestDb ? 'var(--rot)' : (res.warnDbZiel||res.warnRoherloes ? '#c48a00' : 'var(--gruen)');
+
+  openModal(`
+    <div class="modal-head"><h3>Übersicht</h3><button class="btn-ghost icon" id="mClose">✕</button></div>
+    <div class="modal-body" style="padding:0;">
+      <div style="background:var(--schwarz);color:#fff;padding:26px 28px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;right:0;bottom:0;width:6px;background:${accent};"></div>
+        <div style="font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--grau-300);font-family:var(--font-num);">${d.angebotsNr || 'Entwurf'} · ${d.datum||''}</div>
+        <div style="font-size:24px;font-weight:700;margin-top:4px;">${escapeHtml(d.kunde||'—')}</div>
+        <div style="font-size:14px;color:var(--grau-300);margin-top:2px;">${escapeHtml(d.bauvorhaben||'')}</div>
+      </div>
+      <div style="padding:24px 28px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;font-size:13px;">
+          <div><div style="color:var(--grau-500);font-size:11px;text-transform:uppercase;font-weight:700;">Sorte</div><div style="font-family:var(--font-num);font-weight:600;margin-top:2px;">${d.sorte} ${res.sorteObj?('– '+escapeHtml(res.sorteObj.bezeichnung||'')):''}</div></div>
+          <div><div style="color:var(--grau-500);font-size:11px;text-transform:uppercase;font-weight:700;">Menge</div><div style="font-family:var(--font-num);font-weight:600;margin-top:2px;">${fmtNum(d.volumen,1)} m³</div></div>
+          <div><div style="color:var(--grau-500);font-size:11px;text-transform:uppercase;font-weight:700;">Kundenkategorie</div><div style="font-family:var(--font-num);font-weight:600;margin-top:2px;">${escapeHtml(d.kundenkategorie||'')}</div></div>
+          <div><div style="color:var(--grau-500);font-size:11px;text-transform:uppercase;font-weight:700;">Freigabe</div><div style="margin-top:2px;">${freigabeBadge(d.freigabeStatus)}</div></div>
+        </div>
+
+        <div style="border-top:1px solid var(--grau-100);margin:0 -28px;"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px;">
+          <div style="background:var(--grau-100);border-radius:6px;padding:16px;">
+            <div style="font-size:11px;text-transform:uppercase;color:var(--grau-700);font-weight:700;">Endpreis</div>
+            <div style="font-family:var(--font-num);font-size:26px;font-weight:700;margin-top:4px;">${fmtNum(res.angebotspreis,2)} €<span style="font-size:14px;color:var(--grau-500);"> /m³</span></div>
+          </div>
+          <div style="background:var(--grau-100);border-radius:6px;padding:16px;">
+            <div style="font-size:11px;text-transform:uppercase;color:var(--grau-700);font-weight:700;">Nettobetrag Auftrag</div>
+            <div style="font-family:var(--font-num);font-size:26px;font-weight:700;margin-top:4px;">${fmtEUR(res.nettobetrag)}</div>
+          </div>
+          <div style="background:${res.roherloesProzent<parameter.minRoherlösProzent?'var(--rot-bg)':'var(--gruen-bg)'};border-radius:6px;padding:16px;">
+            <div style="font-size:11px;text-transform:uppercase;color:var(--grau-700);font-weight:700;">Roherlös</div>
+            <div style="font-family:var(--font-num);font-size:26px;font-weight:700;margin-top:4px;color:${res.roherloesProzent<parameter.minRoherlösProzent?'var(--rot-dunkel)':'var(--gruen)'};">${fmtPct(res.roherloesProzent)}</div>
+          </div>
+          <div style="background:${res.deckungsbeitragProzent<parameter.minDbProzent?'var(--rot-bg)':'var(--gruen-bg)'};border-radius:6px;padding:16px;">
+            <div style="font-size:11px;text-transform:uppercase;color:var(--grau-700);font-weight:700;">Deckungsbeitrag (DB1)</div>
+            <div style="font-family:var(--font-num);font-size:26px;font-weight:700;margin-top:4px;color:${res.deckungsbeitragProzent<parameter.minDbProzent?'var(--rot-dunkel)':'var(--gruen)'};">${fmtPct(res.deckungsbeitragProzent)}</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          ${okAlles
+            ? `<div class="warn-box ok"><b>✓</b> Kalkulation im grünen Bereich – bereit zur Freigabe.</div>`
+            : `<div class="warn-box ${res.warnMindestDb?'bad':'warn'}"><b>⚠</b> ${res.warnMindestDb ? 'Mindest-Deckungsbeitrag unterschritten.' : (res.warnRoherloes ? 'Mindestroherlös unterschritten.' : 'DB1 unter Zielwert.')} Bitte vor Versand prüfen.</div>`}
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" id="mUebersichtSchliessen">Schließen</button>
+      <button class="btn-primary" id="mUebersichtDrucken">Drucken</button>
+    </div>
+  `);
+  document.getElementById('mClose').addEventListener('click', closeModal);
+  document.getElementById('mUebersichtSchliessen').addEventListener('click', closeModal);
+  document.getElementById('mUebersichtDrucken').addEventListener('click', () => window.print());
+}
+
+/* ---------------------------------------------------------------------
+   6) SPEICHERN / LÖSCHEN / DUPLIZIEREN
+   --------------------------------------------------------------------- */
+async function nextAngebotsNr(){
+  const year = new Date().getFullYear();
+  const counterRef = ref(db, 'meta/counter/' + year);
+  const result = await runTransaction(counterRef, (curr) => (curr || 0) + 1);
+  const n = result.snapshot.val();
+  return `KA-${year}-${String(n).padStart(4,'0')}`;
+}
+
+async function saveCurrent(){
+  try{
+    const d = currentDraft;
+    if (!d.kunde || !d.bauvorhaben){
+      toast('Bitte Kunde und Bauvorhaben angeben.', true);
+      return;
+    }
+    const now = Date.now();
+    if (!currentId){
+      d.angebotsNr = await nextAngebotsNr();
+      d.createdAt = now;
+      const newRef = push(ref(db, 'kalkulationen'));
+      currentId = newRef.key;
+      d.id = currentId;
+      d.updatedAt = now;
+      await set(newRef, d);
+    } else {
+      d.updatedAt = now;
+      await update(ref(db, 'kalkulationen/' + currentId), d);
+    }
+    unsavedDirty = false;
+    toast('Kalkulation gespeichert.');
+    render();
+  } catch(err){
+    console.error(err);
+    toast('Speichern fehlgeschlagen: ' + err.message, true);
+  }
+}
+
+async function deleteCurrent(){
+  if (!currentId) return;
+  if (!confirm('Diese Kalkulation wirklich unwiderruflich löschen?')) return;
+  try{
+    await remove(ref(db, 'kalkulationen/' + currentId));
+    toast('Kalkulation gelöscht.');
+    newDraft();
+  } catch(err){
+    toast('Löschen fehlgeschlagen: ' + err.message, true);
+  }
+}
+
+function duplicateCurrent(){
+  currentDraft = { ...currentDraft, id:null, angebotsNr:null, createdAt:null, updatedAt:null, datum: todayISO() };
+  currentId = null;
+  unsavedDirty = true;
+  render();
+  toast('Als neue Kalkulation dupliziert – noch nicht gespeichert.');
+}
+
+/* ---------------------------------------------------------------------
+   7) EINSTELLUNGEN (Preise, Parameter) – passwortgeschützt
+   --------------------------------------------------------------------- */
+function openModal(html, extraClass){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `<div class="modal-overlay" id="modalOverlay"><div class="modal${extraClass?(' '+extraClass):''}">${html}</div></div>`;
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') closeModal();
+  });
+}
+function closeModal(){
+  document.getElementById('modalRoot').innerHTML = '';
+}
+
+document.getElementById('btnAdmin').addEventListener('click', () => {
+  openModal(`
+    <div class="modal-head"><h3>Einstellungen</h3><button class="btn-ghost icon" id="mClose">✕</button></div>
+    <div class="modal-body">
+      <p style="margin-top:0;font-size:13px;color:var(--grau-700);">Bitte Admin-Passwort eingeben, um Preisliste und Kalkulationsparameter zu bearbeiten.</p>
+      <input type="password" id="mPassword" placeholder="Passwort">
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" id="mCancel">Abbrechen</button>
+      <button class="btn-primary" id="mOk">Weiter</button>
+    </div>
+  `);
+  document.getElementById('mClose').addEventListener('click', closeModal);
+  document.getElementById('mCancel').addEventListener('click', closeModal);
+  document.getElementById('mOk').addEventListener('click', () => {
+    const pw = document.getElementById('mPassword').value;
+    if (pw === ADMIN_PASSWORD){
+      openSettingsModal();
+    } else {
+      toast('Falsches Passwort.', true);
+    }
+  });
+  document.getElementById('mPassword').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('mOk').click();
+  });
+});
+
+function openSettingsModal(){
+  const p = parameter;
+  openModal(`
+    <div class="modal-head"><h3>Einstellungen</h3><button class="btn-ghost icon" id="mClose">✕</button></div>
+    <div class="modal-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="parameter">Parameter</button>
+        <button class="tab-btn" data-tab="preise">Preisliste</button>
+        <button class="tab-btn" data-tab="kunden">Kunden</button>
+        <button class="tab-btn" data-tab="bauvorhaben">Bauvorhaben</button>
+      </div>
+
+      <div class="tab-panel active" data-panel="parameter">
+        <div class="grid c2">
+          <div class="field"><label>LKW-Kosten</label><input type="number" id="p_lkw" value="${p.lkwKostenProStunde}" step="0.01"><span class="unit">€/h</span></div>
+          <div class="field"><label>Standardladung (Fuhrenbasis)</label><input type="number" id="p_std" value="${p.standardLadung}" step="0.5"><span class="unit">m³</span></div>
+          <div class="field"><label>Mischkosten</label><input type="number" id="p_mischen" value="${p.mischenProM3}" step="0.1"><span class="unit">€/m³</span></div>
+          <div class="field"><label>Mindermengenzuschlag</label><input type="number" id="p_mindermenge" value="${p.mindermengeZuschlagProM3}" step="0.5"><span class="unit">€/m³ Fehlmenge</span></div>
+          <div class="field"><label>Energiekostenzuschlag</label><input type="number" id="p_energie" value="${p.energieZuschlagProM3}" step="0.5"><span class="unit">€/m³</span></div>
+          <div class="field"><label>Frachtkosten Standard</label><input type="number" id="p_fracht" value="${p.transportZuschlagProM3}" step="0.1"><span class="unit">€/m³</span></div>
+          <div class="field"><label>Werk-Service</label><input type="number" id="p_werkservice" value="${p.werkServiceZuschlagProM3}" step="0.1"><span class="unit">€/m³</span></div>
+          <div class="field"><label>Selbstabholervergütung</label><input type="number" id="p_selbstabholer" value="${p.selbstabholerVerguetungProM3}" step="0.1"><span class="unit">€/m³</span></div>
+          <div class="field"><label>Verzögererzuschlag</label><input type="number" id="p_verzoegerer" value="${p.verzoegererZuschlagProM3}" step="0.1"><span class="unit">€/m³</span></div>
+          <div class="field"><label>Mindestroherlös</label><input type="number" id="p_minroherlos" value="${(p.minRoherlösProzent*100).toFixed(1)}" step="0.5"><span class="unit">% – intern, von GL zu bestätigen</span></div>
+          <div class="field"><label>DB1-Zielwert</label><input type="number" id="p_dbziel" value="${(p.dbZielProzent*100).toFixed(1)}" step="0.5"><span class="unit">% – intern, von GL zu bestätigen</span></div>
+          <div class="field"><label>Mindest-DB1</label><input type="number" id="p_mindb" value="${(p.minDbProzent*100).toFixed(1)}" step="0.5"><span class="unit">% – intern, von GL zu bestätigen</span></div>
+          <div class="field"><label>Preiswechsel-Stichtag</label><input type="text" id="p_stichtag" value="${p.preiswechselDatum}"><span class="unit">JJJJ-MM-TT</span></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="preise">
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          <input type="search" id="priceSearch" placeholder="Sorte oder Bezeichnung suchen…" style="flex:1;padding:8px;border:1px solid var(--grau-300);border-radius:3px;font-family:var(--font-num);">
+          <span style="font-size:11px;color:var(--grau-500);font-family:var(--font-num);"><span id="sortenCount">${sorten.length}</span> Sorten</span>
+          <button class="btn-dark" id="btnNeueSorte" style="white-space:nowrap;">+ Neue Sorte</button>
+        </div>
+        <div class="price-scroll">
+          <table class="price-table" id="priceTable">
+            <thead><tr><th>Sorte</th><th>Bezeichnung</th><th class="num">EK €/m³</th><th class="num">VK €/m³</th><th class="num">VK ab Stichtag</th><th></th></tr></thead>
+            <tbody id="priceTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="kunden">
+        <div class="import-row">
+          <span>📄 Kundendaten aus Excel importieren (Spalten: Kunde, Kategorie, Adresse, Ansprechpartner, Telefon, E-Mail – Reihenfolge egal, unbekannte Spalten werden ignoriert):</span>
+          <input type="file" id="kundenExcelInput" accept=".xlsx,.xls,.csv">
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          <input type="search" id="kundenSearch" placeholder="Kunde suchen…" style="flex:1;padding:8px;border:1px solid var(--grau-300);border-radius:3px;font-family:var(--font-num);">
+          <span style="font-size:11px;color:var(--grau-500);font-family:var(--font-num);"><span id="kundenCount">0</span> Kunden</span>
+          <button class="btn-dark" id="btnNeuerKunde" style="white-space:nowrap;">+ Neuer Kunde</button>
+        </div>
+        <div class="price-scroll">
+          <table class="price-table" id="kundenTable">
+            <thead><tr><th>Kunde</th><th>Kategorie</th><th>Adresse</th><th>Ansprechpartner</th><th>Telefon</th><th>E-Mail</th><th></th></tr></thead>
+            <tbody id="kundenTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="bauvorhaben">
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+          <input type="search" id="bauvorhabenSearch" placeholder="Bauvorhaben suchen…" style="flex:1;padding:8px;border:1px solid var(--grau-300);border-radius:3px;font-family:var(--font-num);">
+          <span style="font-size:11px;color:var(--grau-500);font-family:var(--font-num);"><span id="bauvorhabenCount">0</span> Bauvorhaben</span>
+          <button class="btn-dark" id="btnNeuesBauvorhaben" style="white-space:nowrap;">+ Neues Bauvorhaben</button>
+        </div>
+        <div class="price-scroll">
+          <table class="price-table" id="bauvorhabenTable">
+            <thead><tr><th>Bezeichnung</th><th>Adresse (für Route)</th><th>Kunde</th><th>Notiz</th><th></th></tr></thead>
+            <tbody id="bauvorhabenTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" id="mCancel">Abbrechen</button>
+      <button class="btn-primary" id="mSaveSettings">Speichern</button>
+    </div>
+  `, 'wide');
+
+  // Tab-Umschaltung
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(pnl => pnl.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`.tab-panel[data-panel="${btn.dataset.tab}"]`).classList.add('active');
+    });
+  });
+
+  // --- Preisliste (Sorten) ---
+  modalSortenList = sorten.map(s => ({...s, _cid: String(s.sorte)}));
+  renderPriceTableBody(modalSortenList);
+  document.getElementById('priceSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    renderPriceTableBody(modalSortenList.filter(s => String(s.sorte).toLowerCase().includes(q) || (s.bezeichnung||'').toLowerCase().includes(q)));
+  });
+  document.getElementById('btnNeueSorte').addEventListener('click', () => {
+    sortenNewCounter++;
+    modalSortenList.unshift({ sorte:'', bezeichnung:'', ek:null, preis:null, preis_neu:null, _new:true, _cid:'newsorte_'+sortenNewCounter });
+    document.getElementById('priceSearch').value = '';
+    renderPriceTableBody(modalSortenList);
+    document.getElementById('sortenCount').textContent = modalSortenList.length;
+    const firstInput = document.querySelector('#priceTableBody tr .pt-sorte-new');
+    if (firstInput) firstInput.focus();
+  });
+
+  // --- Kunden ---
+  modalKundenList = kunden.map(k => ({...k, _cid: k.id}));
+  renderKundenTableBody(modalKundenList);
+  document.getElementById('kundenSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    renderKundenTableBody(modalKundenList.filter(k => (k.name||'').toLowerCase().includes(q)));
+  });
+  document.getElementById('btnNeuerKunde').addEventListener('click', () => {
+    kundenNewCounter++;
+    modalKundenList.unshift({ name:'', kategorie:'A-Kunde', adresse:'', ansprechpartner:'', telefon:'', email:'', _new:true, _cid:'newkunde_'+kundenNewCounter });
+    document.getElementById('kundenSearch').value = '';
+    renderKundenTableBody(modalKundenList);
+    document.getElementById('kundenCount').textContent = modalKundenList.length;
+    const fi = document.querySelector('#kundenTableBody tr .kt-name');
+    if (fi) fi.focus();
+  });
+  document.getElementById('kundenExcelInput').addEventListener('change', handleKundenExcelImport);
+
+  // --- Bauvorhaben ---
+  modalBauvorhabenList = bauvorhaben.map(b => ({...b, _cid: b.id}));
+  renderBauvorhabenTableBody(modalBauvorhabenList);
+  document.getElementById('bauvorhabenSearch').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    renderBauvorhabenTableBody(modalBauvorhabenList.filter(b => (b.name||'').toLowerCase().includes(q)));
+  });
+  document.getElementById('btnNeuesBauvorhaben').addEventListener('click', () => {
+    bauvorhabenNewCounter++;
+    modalBauvorhabenList.unshift({ name:'', adresse:'', kunde:'', notiz:'', _new:true, _cid:'newbv_'+bauvorhabenNewCounter });
+    document.getElementById('bauvorhabenSearch').value = '';
+    renderBauvorhabenTableBody(modalBauvorhabenList);
+    document.getElementById('bauvorhabenCount').textContent = modalBauvorhabenList.length;
+    const fi = document.querySelector('#bauvorhabenTableBody tr .bt-name');
+    if (fi) fi.focus();
+  });
+
+  document.getElementById('mClose').addEventListener('click', closeModal);
+  document.getElementById('mCancel').addEventListener('click', closeModal);
+  document.getElementById('mSaveSettings').addEventListener('click', saveSettingsFromModal);
+}
+
+let modalSortenList = [];
+let modalKundenList = [];
+let modalBauvorhabenList = [];
+let sortenNewCounter = 0, kundenNewCounter = 0, bauvorhabenNewCounter = 0;
+
+function findModalEntry(cid){
+  return modalSortenList.find(s => s._cid === cid);
+}
+
+function renderPriceTableBody(list){
+  const body = document.getElementById('priceTableBody');
+  body.innerHTML = list.map((s) => `
+    <tr data-cid="${s._cid}" ${s._new ? 'data-new="1"' : ''}>
+      <td>${s._new ? `<input type="text" class="pt-sorte-new" placeholder="z.B. 140164" value="${escapeHtml(s.sorte||'')}">` : s.sorte}</td>
+      <td><input type="text" class="pt-bez" value="${escapeHtml(s.bezeichnung||'')}"></td>
+      <td class="num"><input type="number" class="pt-ek" value="${s.ek!=null?Number(s.ek).toFixed(2):''}" step="0.01"></td>
+      <td class="num"><input type="number" class="pt-preis" value="${s.preis!=null?Number(s.preis).toFixed(2):''}" step="0.01"></td>
+      <td class="num"><input type="number" class="pt-preisneu" value="${s.preis_neu!=null?Number(s.preis_neu).toFixed(2):''}" step="0.01"></td>
+      <td>${s._new ? `<button class="btn-ghost pt-remove" title="Zeile verwerfen" style="padding:4px 8px;font-size:11px;">✕</button>` : ''}</td>
+    </tr>
+  `).join('');
+
+  // Live-Sync: jede Eingabe schreibt sofort zurück in modalSortenList, damit
+  // Suche/Filtern zwischendurch keine ungespeicherten Änderungen verwirft.
+  body.querySelectorAll('tr').forEach(row => {
+    const cid = row.dataset.cid;
+    const entry = findModalEntry(cid);
+    if (!entry) return;
+    const wire = (sel, prop, parse) => {
+      const el = row.querySelector(sel);
+      if (!el) return;
+      el.addEventListener('input', () => { entry[prop] = parse(el.value); });
+    };
+    if (entry._new) wire('.pt-sorte-new','sorte', v => v.trim());
+    wire('.pt-bez','bezeichnung', v => v.trim());
+    wire('.pt-ek','ek', v => v === '' ? null : Number(v));
+    wire('.pt-preis','preis', v => v === '' ? null : Number(v));
+    wire('.pt-preisneu','preis_neu', v => v === '' ? null : Number(v));
+  });
+
+  body.querySelectorAll('.pt-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const cid = e.target.closest('tr').dataset.cid;
+      modalSortenList = modalSortenList.filter(s => s._cid !== cid);
+      renderPriceTableBody(modalSortenList);
+      document.getElementById('sortenCount').textContent = modalSortenList.length;
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------
+   KUNDEN-STAMMDATEN – Tabelle im Einstellungsdialog (analog Preisliste)
+   --------------------------------------------------------------------- */
+function findModalKunde(cid){
+  return modalKundenList.find(k => k._cid === cid);
+}
+
+function renderKundenTableBody(list){
+  const body = document.getElementById('kundenTableBody');
+  document.getElementById('kundenCount').textContent = modalKundenList.length;
+  body.innerHTML = list.map(k => `
+    <tr data-cid="${k._cid}">
+      <td><input type="text" class="kt-name" value="${escapeHtml(k.name||'')}"></td>
+      <td>
+        <select class="kt-kategorie">
+          ${['A-Kunde','B-Kunde','C-Kunde'].map(kat => `<option ${k.kategorie===kat?'selected':''}>${kat}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" class="kt-adresse" value="${escapeHtml(k.adresse||'')}"></td>
+      <td><input type="text" class="kt-ansprechpartner" value="${escapeHtml(k.ansprechpartner||'')}"></td>
+      <td><input type="text" class="kt-telefon" value="${escapeHtml(k.telefon||'')}"></td>
+      <td><input type="text" class="kt-email" value="${escapeHtml(k.email||'')}"></td>
+      <td><button class="btn-ghost kt-remove" title="Kunde löschen" style="padding:4px 8px;font-size:11px;">✕</button></td>
+    </tr>
+  `).join('');
+
+  body.querySelectorAll('tr').forEach(row => {
+    const cid = row.dataset.cid;
+    const entry = findModalKunde(cid);
+    if (!entry) return;
+    const wire = (sel, prop) => {
+      const el = row.querySelector(sel);
+      if (!el) return;
+      el.addEventListener('input', () => { entry[prop] = el.value; });
+      el.addEventListener('change', () => { entry[prop] = el.value; });
+    };
+    wire('.kt-name','name');
+    wire('.kt-kategorie','kategorie');
+    wire('.kt-adresse','adresse');
+    wire('.kt-ansprechpartner','ansprechpartner');
+    wire('.kt-telefon','telefon');
+    wire('.kt-email','email');
+  });
+
+  body.querySelectorAll('.kt-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const cid = e.target.closest('tr').dataset.cid;
+      modalKundenList = modalKundenList.filter(k => k._cid !== cid);
+      renderKundenTableBody(modalKundenList);
+    });
+  });
+}
+
+/* Excel-Import für Kundendaten (Spaltennamen flexibel/case-insensitiv erkannt) */
+function handleKundenExcelImport(e){
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (typeof XLSX === 'undefined'){
+    toast('Excel-Bibliothek konnte nicht geladen werden (Internetverbindung prüfen).', true);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try{
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      const findCol = (row, ...names) => {
+        const keys = Object.keys(row);
+        for (const name of names){
+          const key = keys.find(k => k.toString().trim().toLowerCase() === name);
+          if (key) return row[key];
+        }
+        return '';
+      };
+
+      let neu = 0, aktualisiert = 0;
+      rows.forEach(row => {
+        const name = String(findCol(row,'kunde','name','kundenname')).trim();
+        if (!name) return;
+        const kategorie = String(findCol(row,'kategorie','kundenkategorie')).trim() || 'A-Kunde';
+        const adresse = String(findCol(row,'adresse','anschrift','ort')).trim();
+        const ansprechpartner = String(findCol(row,'ansprechpartner','kontakt','ansprechpartner/in')).trim();
+        const telefon = String(findCol(row,'telefon','tel','telefonnummer')).trim();
+        const email = String(findCol(row,'e-mail','email','mail')).trim();
+
+        const existing = modalKundenList.find(k => (k.name||'').trim().toLowerCase() === name.toLowerCase());
+        if (existing){
+          existing.kategorie = kategorie || existing.kategorie;
+          existing.adresse = adresse || existing.adresse;
+          existing.ansprechpartner = ansprechpartner || existing.ansprechpartner;
+          existing.telefon = telefon || existing.telefon;
+          existing.email = email || existing.email;
+          aktualisiert++;
+        } else {
+          kundenNewCounter++;
+          modalKundenList.push({ name, kategorie, adresse, ansprechpartner, telefon, email, _cid: 'newkunde_import_'+kundenNewCounter });
+          neu++;
+        }
+      });
+
+      document.getElementById('kundenSearch').value = '';
+      renderKundenTableBody(modalKundenList);
+      toast(`Excel-Import: ${neu} neue Kunden, ${aktualisiert} aktualisiert. Bitte prüfen und dann „Speichern" klicken.`);
+    } catch(err){
+      console.error(err);
+      toast('Excel-Import fehlgeschlagen: ' + err.message, true);
+    } finally {
+      e.target.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ---------------------------------------------------------------------
+   BAUVORHABEN-STAMMDATEN – Tabelle im Einstellungsdialog
+   --------------------------------------------------------------------- */
+function findModalBauvorhaben(cid){
+  return modalBauvorhabenList.find(b => b._cid === cid);
+}
+
+function renderBauvorhabenTableBody(list){
+  const body = document.getElementById('bauvorhabenTableBody');
+  document.getElementById('bauvorhabenCount').textContent = modalBauvorhabenList.length;
+  body.innerHTML = list.map(b => `
+    <tr data-cid="${b._cid}">
+      <td><input type="text" class="bt-name" value="${escapeHtml(b.name||'')}"></td>
+      <td><input type="text" class="bt-adresse" value="${escapeHtml(b.adresse||'')}" placeholder="Straße, PLZ Ort"></td>
+      <td><input type="text" class="bt-kunde" list="kundenList" value="${escapeHtml(b.kunde||'')}"></td>
+      <td><input type="text" class="bt-notiz" value="${escapeHtml(b.notiz||'')}"></td>
+      <td><button class="btn-ghost bt-remove" title="Bauvorhaben löschen" style="padding:4px 8px;font-size:11px;">✕</button></td>
+    </tr>
+  `).join('');
+
+  body.querySelectorAll('tr').forEach(row => {
+    const cid = row.dataset.cid;
+    const entry = findModalBauvorhaben(cid);
+    if (!entry) return;
+    const wire = (sel, prop) => {
+      const el = row.querySelector(sel);
+      if (!el) return;
+      el.addEventListener('input', () => { entry[prop] = el.value; });
+    };
+    wire('.bt-name','name');
+    wire('.bt-adresse','adresse');
+    wire('.bt-kunde','kunde');
+    wire('.bt-notiz','notiz');
+  });
+
+  body.querySelectorAll('.bt-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const cid = e.target.closest('tr').dataset.cid;
+      modalBauvorhabenList = modalBauvorhabenList.filter(b => b._cid !== cid);
+      renderBauvorhabenTableBody(modalBauvorhabenList);
+    });
+  });
+}
+
+async function saveSettingsFromModal(){
+  try{
+    const newParams = {
+      lkwKostenProStunde: Number(document.getElementById('p_lkw').value),
+      standardLadung: Number(document.getElementById('p_std').value),
+      mischenProM3: Number(document.getElementById('p_mischen').value),
+      mindermengeZuschlagProM3: Number(document.getElementById('p_mindermenge').value),
+      energieZuschlagProM3: Number(document.getElementById('p_energie').value),
+      transportZuschlagProM3: Number(document.getElementById('p_fracht').value),
+      werkServiceZuschlagProM3: Number(document.getElementById('p_werkservice').value),
+      selbstabholerVerguetungProM3: Number(document.getElementById('p_selbstabholer').value),
+      verzoegererZuschlagProM3: Number(document.getElementById('p_verzoegerer').value),
+      minRoherlösProzent: Number(document.getElementById('p_minroherlos').value) / 100,
+      dbZielProzent: Number(document.getElementById('p_dbziel').value) / 100,
+      minDbProzent: Number(document.getElementById('p_mindb').value) / 100,
+      preiswechselDatum: document.getElementById('p_stichtag').value.trim()
+    };
+    await set(ref(db, 'settings/parameter'), newParams);
+
+    const sortenUpdate = {};
+    const seenCodes = new Set();
+    let skipped = false;
+    modalSortenList.forEach(entry => {
+      const code = String(entry.sorte || '').trim();
+      if (!code){ skipped = true; return; } // Zeile ohne Sorten-Nr. -> überspringen
+      if (seenCodes.has(code)){ skipped = true; return; } // Duplikat -> überspringen
+      seenCodes.add(code);
+      sortenUpdate[code] = {
+        sorte: isNaN(Number(code)) ? code : Number(code),
+        bezeichnung: (entry.bezeichnung || '').toString().trim() || null,
+        ek: entry.ek == null || entry.ek === '' ? null : round2(Number(entry.ek)),
+        preis: entry.preis == null || entry.preis === '' ? null : round2(Number(entry.preis)),
+        preis_neu: entry.preis_neu == null || entry.preis_neu === '' ? null : round2(Number(entry.preis_neu))
+      };
+    });
+    if (skipped){
+      toast('Einige Zeilen ohne gültige/eindeutige Sorten-Nr. wurden übersprungen.', true);
+    }
+    await set(ref(db, 'settings/sorten'), sortenUpdate);
+
+    const kundenById = {};
+    modalKundenList.forEach(entry => {
+      const name = (entry.name || '').toString().trim();
+      if (!name) return; // Zeile ohne Namen -> überspringen
+      const id = entry.id || push(ref(db, 'settings/kunden')).key;
+      kundenById[id] = {
+        name,
+        kategorie: entry.kategorie || 'A-Kunde',
+        adresse: (entry.adresse || '').toString().trim(),
+        ansprechpartner: (entry.ansprechpartner || '').toString().trim(),
+        telefon: (entry.telefon || '').toString().trim(),
+        email: (entry.email || '').toString().trim()
+      };
+    });
+    await set(ref(db, 'settings/kunden'), kundenById);
+
+    const bauvorhabenById = {};
+    modalBauvorhabenList.forEach(entry => {
+      const name = (entry.name || '').toString().trim();
+      if (!name) return; // Zeile ohne Namen -> überspringen
+      const id = entry.id || push(ref(db, 'settings/bauvorhaben')).key;
+      bauvorhabenById[id] = {
+        name,
+        adresse: (entry.adresse || '').toString().trim(),
+        kunde: (entry.kunde || '').toString().trim(),
+        notiz: (entry.notiz || '').toString().trim()
+      };
+    });
+    await set(ref(db, 'settings/bauvorhaben'), bauvorhabenById);
+
+    toast('Einstellungen gespeichert.');
+    closeModal();
+    render();
+  } catch(err){
+    console.error(err);
+    toast('Speichern fehlgeschlagen: ' + err.message, true);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   8) SONSTIGES – Suche, Neu-Button, CSV-Export
+   --------------------------------------------------------------------- */
+document.getElementById('searchBox').addEventListener('input', renderProjectList);
+document.getElementById('btnNew').addEventListener('click', () => {
+  if (unsavedDirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+  newDraft();
+});
+document.getElementById('btnExport').addEventListener('click', () => {
+  const rows = Object.values(projekte).map(p => {
+    const r = calcKalkulation(p);
+    return [p.angebotsNr, p.datum, p.kunde, p.bauvorhaben, p.sorte, p.volumen,
+      round2(r.angebotspreis), round2(r.nettobetrag), round2(r.roherloesProM3),
+      round2(r.roherloesProzent*100), round2(r.deckungsbeitragProM3), round2(r.deckungsbeitragProzent*100)
+    ].map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(';');
+  });
+  const header = ['Angebots-Nr','Datum','Kunde','Bauvorhaben','Sorte','Volumen_m3','Angebotspreis_EUR_m3',
+    'Nettobetrag_EUR','Roherloes_EUR_m3','Roherloes_Prozent','DB1_EUR_m3','DB1_Prozent'].join(';');
+  const csv = '\uFEFF' + header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'kalkulationen_export_' + todayISO() + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+</script>
+</body>
+</html>
